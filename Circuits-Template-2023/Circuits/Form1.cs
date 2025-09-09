@@ -1,58 +1,32 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace Circuits
 {
-    /// <summary>
-    /// The main GUI for the COMPX102 digital circuits editor.
-    /// This has a toolbar, containing buttons called buttonAnd, buttonOr, etc.
-    /// The contents of the circuit are drawn directly onto the form.
-    /// 
-    /// </summary>
     public partial class Form1 : Form
     {
-        /// <summary>
-        /// The (x,y) mouse position of the last MouseDown event.
-        /// </summary>
+        // Mouse position recorded on mouse down (used for drag)
         protected int startX, startY;
 
-        /// <summary>
-        /// If this is non-null, we are inserting a wire by
-        /// dragging the mouse from startPin to some output Pin.
-        /// </summary>
+        // Currently dragging wire start pin (null if not dragging wire)
         protected Pin startPin = null;
 
-        /// <summary>
-        /// The (x,y) position of the current gate, just before we started dragging it.
-        /// </summary>
+        // Saved coordinates of gate before dragging
         protected int currentX, currentY;
 
-        /// <summary>
-        /// The set of gates in the circuit
-        /// </summary>
-        protected List<AndGate> gatesList = new List<AndGate>();
+        // Collection of all gates in the current circuit
+        protected List<Gate> gatesList = new List<Gate>();
 
-        /// <summary>
-        /// The set of connector wires in the circuit
-        /// </summary>
+        // Collection of all wires in the current circuit
         protected List<Wire> wiresList = new List<Wire>();
 
-        /// <summary>
-        /// The currently selected gate, or null if no gate is selected.
-        /// </summary>
-        protected AndGate current = null;
+        // Currently selected gate or null
+        protected Gate current = null;
 
-        /// <summary>
-        /// The new gate that is about to be inserted into the circuit
-        /// </summary>
-        protected AndGate newGate = null;
+        // Gate being newly inserted and dragged before placement
+        protected Gate newGate = null;
 
         public Form1()
         {
@@ -61,67 +35,62 @@ namespace Circuits
         }
 
         /// <summary>
-        /// Finds the pin that is close to (x,y), or returns
-        /// null if there are no pins close to the position.
+        /// Finds a pin near the given (x,y), or returns null if none.
+        /// Used when inserting wires or selecting pins.
         /// </summary>
-        /// <param name="x"></param>
-        /// <param name="y"></param>
-        /// <returns>The pin that has been selected</returns>
         public Pin findPin(int x, int y)
         {
-            foreach (AndGate g in gatesList)
+            foreach (var gate in gatesList)
             {
-                foreach (Pin p in g.Pins)
+                foreach (var pin in gate.Pins)
                 {
-                    if (p.isMouseOn(x, y))
-                        return p;
+                    if (pin.IsMouseOn(x, y))
+                        return pin;
                 }
             }
             return null;
         }
 
         /// <summary>
-        /// Handles all events when the mouse is moving.
+        /// Handles mouse movement events.
+        /// Updates dragging of wires or gates or new gate insertions accordingly.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         private void Form1_MouseMove(object sender, MouseEventArgs e)
         {
             if (startPin != null)
             {
-                Console.WriteLine("wire from " + startPin + " to " + e.X + "," + e.Y);
+                // Dragging a wire from a pin: update endpoint position for rubberband line
                 currentX = e.X;
                 currentY = e.Y;
-                this.Invalidate();  // this will draw the line
+                Invalidate();
             }
             else if (startX >= 0 && startY >= 0 && current != null)
             {
-                Console.WriteLine("mouse move to " + e.X + "," + e.Y);
+                // Dragging a selected gate: move it accordingly
                 current.MoveTo(currentX + (e.X - startX), currentY + (e.Y - startY));
-                this.Invalidate();
+                Invalidate();
             }
             else if (newGate != null)
             {
+                // Moving a new gate around before placement
                 currentX = e.X;
                 currentY = e.Y;
-                this.Invalidate();
+                Invalidate();
             }
         }
 
         /// <summary>
-        /// Handles all events when the mouse button is released.
+        /// Handles mouse button release.
+        /// Finalises wire creation or ends dragging actions.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         private void Form1_MouseUp(object sender, MouseEventArgs e)
         {
             if (startPin != null)
             {
-                // see if we can insert a wire
+                // Attempt to connect wire from startPin to a nearby pin
                 Pin endPin = findPin(e.X, e.Y);
                 if (endPin != null)
                 {
-                    Console.WriteLine("Trying to connect " + startPin + " to " + endPin);
                     Pin input, output;
                     if (startPin.IsOutput)
                     {
@@ -133,6 +102,7 @@ namespace Circuits
                         input = startPin;
                         output = endPin;
                     }
+                    // Validate connection direction
                     if (input.IsInput && output.IsOutput)
                     {
                         if (input.InputWire == null)
@@ -152,9 +122,10 @@ namespace Circuits
                     }
                 }
                 startPin = null;
-                this.Invalidate();
+                Invalidate();
             }
-            // We have finished moving/dragging
+
+            // Reset drag tracking variables
             startX = -1;
             startY = -1;
             currentX = 0;
@@ -162,62 +133,60 @@ namespace Circuits
         }
 
         /// <summary>
-        /// This will create a new And gate.
+        /// Event handler for pressing the AND gate button.
+        /// Initiates creation of a new AndGate to be placed.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         private void toolStripButtonAnd_Click(object sender, EventArgs e)
         {
             newGate = new AndGate(0, 0);
         }
 
         /// <summary>
-        /// Redraws all the graphics for the current circuit.
+        /// Paint handler draws all gates, wires, and any currently dragged elements.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         private void Form1_Paint(object sender, PaintEventArgs e)
         {
-            //Draw all of the gates
-            foreach (AndGate g in gatesList)
+            // Draw all gates
+            foreach (var gate in gatesList)
             {
-                g.Draw(e.Graphics);
-            }
-            //Draw all of the wires
-            foreach (Wire w in wiresList)
-            {
-                w.Draw(e.Graphics);
+                gate.Draw(e.Graphics);
             }
 
+            // Draw all wires
+            foreach (var wire in wiresList)
+            {
+                wire.Draw(e.Graphics);
+            }
+
+            // Draw wire rubberband if dragging a wire
             if (startPin != null)
             {
                 e.Graphics.DrawLine(Pens.White,
                     startPin.X, startPin.Y,
                     currentX, currentY);
             }
+
+            // Draw the new gate being inserted and dragged (if any)
             if (newGate != null)
             {
-                // show the gate that we are dragging into the circuit
                 newGate.MoveTo(currentX, currentY);
                 newGate.Draw(e.Graphics);
             }
         }
 
         /// <summary>
-        /// Handles events while the mouse button is pressed down.
+        /// Handles mouse button press for selecting gates or starting wire drags.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         private void Form1_MouseDown(object sender, MouseEventArgs e)
         {
             if (current == null)
             {
-                // try to start adding a wire
+                // Try starting wire drag if clicking on a pin
                 startPin = findPin(e.X, e.Y);
             }
             else if (current.IsMouseOn(e.X, e.Y))
             {
-                // start dragging the current object around
+                // Begin dragging the currently selected gate
                 startX = e.X;
                 startY = e.Y;
                 currentX = current.Left;
@@ -226,38 +195,36 @@ namespace Circuits
         }
 
         /// <summary>
-        /// Handles all events when a mouse is clicked in the form.
+        /// Handles mouse clicks for selecting/deselecting gates and placing new gates.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
         private void Form1_MouseClick(object sender, MouseEventArgs e)
         {
-            //Check if a gate is currently selected
+            // Deselect current gate if any
             if (current != null)
             {
-                //Unselect the selected gate
                 current.Selected = false;
                 current = null;
-                this.Invalidate();
+                Invalidate();
             }
-            // See if we are inserting a new gate
+
+            // If inserting a new gate, place it at click location
             if (newGate != null)
             {
                 newGate.MoveTo(e.X, e.Y);
                 gatesList.Add(newGate);
                 newGate = null;
-                this.Invalidate();
+                Invalidate();
             }
             else
             {
-                // search for the first gate under the mouse position
-                foreach (AndGate g in gatesList)
+                // Try selecting a gate under the mouse
+                foreach (var gate in gatesList)
                 {
-                    if (g.IsMouseOn(e.X, e.Y))
+                    if (gate.IsMouseOn(e.X, e.Y))
                     {
-                        g.Selected = true;
-                        current = g;
-                        this.Invalidate();
+                        gate.Selected = true;
+                        current = gate;
+                        Invalidate();
                         break;
                     }
                 }

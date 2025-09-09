@@ -117,7 +117,7 @@ namespace Circuits
         /// <param name="mouseX">The X position of the mouse</param>
         /// <param name="mouseY">The Y position of the mouse</param>
         /// <returns>true if mouse is close to the main end of the pin</returns>
-        public bool isMouseOn(int mouseX, int mouseY)
+        public bool IsMouseOn(int mouseX, int mouseY)
         {
             int diffX = mouseX - x;
             int diffY = mouseY - y;
