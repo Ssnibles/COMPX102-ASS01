@@ -82,8 +82,8 @@ namespace Circuits
         }
 
         /// <summary>
-        /// Move the gate and its pins to a new position (x,y).
-        /// Updates the position of pins relative to the gate body.
+        /// Move the gate and its pins to a new position (x,y)
+        /// Updates the position of pins relative to the gate body
         /// </summary>
         public void MoveTo(int x, int y)
         {
