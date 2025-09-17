@@ -5,8 +5,8 @@ namespace Circuits
 {
     public class OrGate : Gate
     {
-        private static Bitmap normalImage;   // Normal state image
-        private static Bitmap selectedImage; // Selected state image
+        private static Bitmap normalImage;
+        private static Bitmap selectedImage;
 
         public OrGate(int x, int y) : base(x, y)
         {
@@ -14,7 +14,6 @@ namespace Circuits
             {
                 if (normalImage == null)
                 {
-                    // Ensure these names match your Resources.resx entries
                     normalImage = Properties.Resources.OrGate;
                     selectedImage = Properties.Resources.OrGateRed;
                 }
@@ -26,9 +25,8 @@ namespace Circuits
             }
 
             pins.Clear();
-            // Two inputs (left top/bottom), one output (right middle)
-            pins.Add(new Pin(this, true, 20));
-            pins.Add(new Pin(this, true, HEIGHT - 20));
+            pins.Add(new Pin(this, true, 10));
+            pins.Add(new Pin(this, true, HEIGHT - 10));
             pins.Add(new Pin(this, false, HEIGHT / 2));
             MoveTo(x, y);
         }
@@ -70,6 +68,14 @@ namespace Circuits
                 Rectangle destRect = new Rectangle(left, top, WIDTH, HEIGHT);
                 paper.DrawImage(imageToUse, destRect);
             }
+        }
+
+        // NEW: clone with same position; pins are fresh via constructor
+        public override Gate Clone()
+        {
+            var copy = new OrGate(left, top);
+            copy.Selected = false;
+            return copy;
         }
     }
 }

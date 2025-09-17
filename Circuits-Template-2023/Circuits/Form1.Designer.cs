@@ -35,6 +35,9 @@
             this.toolStripButtonInput = new System.Windows.Forms.ToolStripButton();
             this.toolStripButtonOutputLamp = new System.Windows.Forms.ToolStripButton();
             this.toolStripLabelEvaluate = new System.Windows.Forms.ToolStripLabel();
+            this.toolStripLabelClone = new System.Windows.Forms.ToolStripLabel();
+            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.toolStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -47,7 +50,10 @@
             this.toolStripButtonNot,
             this.toolStripButtonInput,
             this.toolStripButtonOutputLamp,
-            this.toolStripLabelEvaluate});
+            this.toolStripSeparator2,
+            this.toolStripLabelEvaluate,
+            this.toolStripSeparator1,
+            this.toolStripLabelClone});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(1008, 25);
@@ -111,6 +117,23 @@
             this.toolStripLabelEvaluate.Text = "Evaluate";
             this.toolStripLabelEvaluate.Click += new System.EventHandler(this.toolStripLabelEvaluate_Click);
             // 
+            // toolStripLabelClone
+            // 
+            this.toolStripLabelClone.Name = "toolStripLabelClone";
+            this.toolStripLabelClone.Size = new System.Drawing.Size(38, 22);
+            this.toolStripLabelClone.Text = "Clone";
+            this.toolStripLabelClone.Click += new System.EventHandler(this.toolStripLabelClone_Click);
+            // 
+            // toolStripSeparator1
+            // 
+            this.toolStripSeparator1.Name = "toolStripSeparator1";
+            this.toolStripSeparator1.Size = new System.Drawing.Size(6, 25);
+            // 
+            // toolStripSeparator2
+            // 
+            this.toolStripSeparator2.Name = "toolStripSeparator2";
+            this.toolStripSeparator2.Size = new System.Drawing.Size(6, 25);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -142,6 +165,9 @@
         private System.Windows.Forms.ToolStripButton toolStripButtonInput;
         private System.Windows.Forms.ToolStripButton toolStripButtonOutputLamp;
         private System.Windows.Forms.ToolStripLabel toolStripLabelEvaluate;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
+        private System.Windows.Forms.ToolStripLabel toolStripLabelClone;
     }
 }
 

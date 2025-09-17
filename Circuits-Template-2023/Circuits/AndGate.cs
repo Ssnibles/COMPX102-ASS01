@@ -5,8 +5,8 @@ namespace Circuits
 {
     public class AndGate : Gate
     {
-        private static Bitmap normalImage;   // Normal state image
-        private static Bitmap selectedImage; // Selected state image
+        private static Bitmap normalImage;
+        private static Bitmap selectedImage;
 
         public AndGate(int x, int y) : base(x, y)
         {
@@ -14,7 +14,6 @@ namespace Circuits
             {
                 if (normalImage == null)
                 {
-                    // Ensure these names match your Resources.resx entries
                     normalImage = Properties.Resources.AndGate;
                     selectedImage = Properties.Resources.AndGateRed;
                 }
@@ -26,9 +25,8 @@ namespace Circuits
             }
 
             pins.Clear();
-            // Two inputs (left top/bottom), one output (right middle)
-            pins.Add(new Pin(this, true, 20));
-            pins.Add(new Pin(this, true, HEIGHT - 20));
+            pins.Add(new Pin(this, true, 10));
+            pins.Add(new Pin(this, true, HEIGHT - 10));
             pins.Add(new Pin(this, false, HEIGHT / 2));
             MoveTo(x, y);
         }
@@ -62,16 +60,22 @@ namespace Circuits
 
         public override void Draw(Graphics paper)
         {
-            // Draw pins first (and any adorners the Pin.Draw might add)
             base.Draw(paper);
 
-            // Pick normal or selected image and draw
             Bitmap imageToUse = selected ? selectedImage : normalImage;
             if (imageToUse != null)
             {
                 Rectangle destRect = new Rectangle(left, top, WIDTH, HEIGHT);
                 paper.DrawImage(imageToUse, destRect);
             }
+        }
+
+        // NEW: clone with same position; pins are fresh via constructor
+        public override Gate Clone()
+        {
+            var copy = new AndGate(left, top);
+            copy.Selected = false;
+            return copy;
         }
     }
 }
