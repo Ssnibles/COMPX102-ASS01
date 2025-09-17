@@ -4,39 +4,50 @@ namespace Circuits
 {
     /// <summary>
     /// Implements an AND gate with two inputs and one output.
-    /// Inherits common behavior and properties from Gate.
+    /// Uses PNG images from resources for normal and selected states.
     /// </summary>
     public class AndGate : Gate
     {
+        private static Bitmap normalImage;  // Normal state image
+        private static Bitmap selectedImage; // Selected state image
+
         /// <summary>
         /// Constructor creates the specific pins and positions them.
-        /// Calls base constructor to initialise position.
         /// </summary>
         public AndGate(int x, int y) : base(x, y)
         {
-            // Create two input pins (true for input)
-            pins.Add(new Pin(this, true, 20));
-            pins.Add(new Pin(this, true, 20));
+            // Load images once if not already loaded
+            if (normalImage == null)
+            {
+                normalImage = Properties.Resources.AndGate;     // AndGate.png
+                selectedImage = Properties.Resources.AndGateRed; // AndGateRed.png
+            }
 
-            // Create one output pin (false for output)
+            // Create two input pins and one output pin
+            pins.Add(new Pin(this, true, 20));
+            pins.Add(new Pin(this, true, 20));
             pins.Add(new Pin(this, false, 20));
 
-            // Position the gate and pins at the specified coordinates
             MoveTo(x, y);
         }
 
         /// <summary>
-        /// Draw the AND gate body, using a combination of ellipse and rectangle,
-        /// then draw the pins via base.Draw().
+        /// Draw the AND gate using the appropriate PNG bitmap from resources.
         /// </summary>
         public override void Draw(Graphics paper)
         {
-            // Draw the pins first, and set brush color appropriately (done in base.Draw)
+            // Draw pins first (this also sets the selected state)
             base.Draw(paper);
 
-            // Draw the AND gate body shapes using the brush set by base.Draw
-            paper.FillEllipse(brush, left, top, WIDTH, HEIGHT);
-            paper.FillRectangle(brush, left, top, WIDTH / 2, HEIGHT);
+            // Choose the appropriate image based on selection state
+            Bitmap imageToUse = selected ? selectedImage : normalImage;
+
+            if (imageToUse != null)
+            {
+                // Draw the image scaled to the gate size
+                Rectangle destRect = new Rectangle(left, top, WIDTH, HEIGHT);
+                paper.DrawImage(imageToUse, destRect);
+            }
         }
     }
 }

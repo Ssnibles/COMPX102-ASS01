@@ -141,6 +141,16 @@ namespace Circuits
             newGate = new AndGate(0, 0);
         }
 
+        private void toolStripButtonOr_Click(object sender, EventArgs e)
+        {
+            newGate = new OrGate(0, 0);
+        }
+
+        private void toolStripButtonNot_Click(object sender, EventArgs e)
+        {
+            newGate = new NotGate(0, 0);
+        }
+
         /// <summary>
         /// Paint handler draws all gates, wires, and any currently dragged elements.
         /// </summary>
@@ -172,6 +182,8 @@ namespace Circuits
                 newGate.MoveTo(currentX, currentY);
                 newGate.Draw(e.Graphics);
             }
+
+            
         }
 
         /// <summary>

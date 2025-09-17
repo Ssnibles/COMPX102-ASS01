@@ -30,6 +30,8 @@
         {
             this.toolStrip1 = new System.Windows.Forms.ToolStrip();
             this.toolStripButtonAnd = new System.Windows.Forms.ToolStripButton();
+            this.toolStripButtonOr = new System.Windows.Forms.ToolStripButton();
+            this.toolStripButtonNot = new System.Windows.Forms.ToolStripButton();
             this.toolStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -37,7 +39,9 @@
             // 
             this.toolStrip1.BackColor = System.Drawing.SystemColors.ControlDarkDark;
             this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripButtonAnd});
+            this.toolStripButtonAnd,
+            this.toolStripButtonOr,
+            this.toolStripButtonNot});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(1008, 25);
@@ -53,6 +57,26 @@
             this.toolStripButtonAnd.Size = new System.Drawing.Size(23, 22);
             this.toolStripButtonAnd.Text = "toolStripButton1";
             this.toolStripButtonAnd.Click += new System.EventHandler(this.toolStripButtonAnd_Click);
+            // 
+            // toolStripButtonOr
+            // 
+            this.toolStripButtonOr.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.toolStripButtonOr.Image = global::Circuits.Properties.Resources.OrIcon;
+            this.toolStripButtonOr.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButtonOr.Name = "toolStripButtonOr";
+            this.toolStripButtonOr.Size = new System.Drawing.Size(23, 22);
+            this.toolStripButtonOr.Text = "toolStripButton1";
+            this.toolStripButtonOr.Click += new System.EventHandler(this.toolStripButtonOr_Click);
+            // 
+            // toolStripButtonNot
+            // 
+            this.toolStripButtonNot.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.toolStripButtonNot.Image = global::Circuits.Properties.Resources.NotGate;
+            this.toolStripButtonNot.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButtonNot.Name = "toolStripButtonNot";
+            this.toolStripButtonNot.Size = new System.Drawing.Size(23, 22);
+            this.toolStripButtonNot.Text = "toolStripButton1";
+            this.toolStripButtonNot.Click += new System.EventHandler(this.toolStripButtonNot_Click);
             // 
             // Form1
             // 
@@ -80,6 +104,8 @@
 
         private System.Windows.Forms.ToolStrip toolStrip1;
         private System.Windows.Forms.ToolStripButton toolStripButtonAnd;
+        private System.Windows.Forms.ToolStripButton toolStripButtonOr;
+        private System.Windows.Forms.ToolStripButton toolStripButtonNot;
     }
 }
 
