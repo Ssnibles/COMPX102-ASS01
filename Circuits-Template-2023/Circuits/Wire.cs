@@ -16,6 +16,7 @@ namespace Circuits
     {
         //Has the wire been selected
         protected bool selected = false;
+
         //The pins the wire is connected to
         protected Pin fromPin, toPin;
 
@@ -64,6 +65,7 @@ namespace Circuits
             //This is a short-hand way of doing an if statement.  It is saying if selected == true then 
             //use Color.Red else use Color.White and then create the wire
             Pen wire = new Pen(selected ? Color.Red : Color.White, 3);
+
             //Draw the wire
             paper.DrawLine(wire, fromPin.X, fromPin.Y, toPin.X, toPin.Y);
         }
