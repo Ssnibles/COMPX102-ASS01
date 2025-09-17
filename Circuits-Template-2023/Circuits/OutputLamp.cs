@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Windows.Forms;
 
 namespace Circuits
 {
@@ -14,10 +15,8 @@ namespace Circuits
         public OutputLamp(int x, int y) : base(x, y)
         {
             pins.Clear();
-
             // One input pin; Pin(owner, isInput, offset)
             pins.Add(new Pin(this, true, 20));
-
             MoveTo(x, y);
         }
 
@@ -34,48 +33,43 @@ namespace Circuits
             }
         }
 
-        // Read upstream signal through the wire
-        private bool SampleInputHigh()
+        public override bool Evaluate()
         {
-            if (pins.Count == 0) return false;
+            if (pins[0].InputWire == null)
+            {
+                MessageBox.Show("LAMP: Input is not connected; lamp will be off.", "Unconnected input",
+                                MessageBoxButtons.OK, MessageBoxIcon.Warning); // assume false
+                lampOn = false;
+                return lampOn;
+            }
 
-            var inPin = pins[0];
-            var wire = inPin.InputWire;
-            if (wire == null) return false;
+            var fromPin = pins[0].InputWire.FromPin;
+            var srcGate = fromPin.Owner as Gate;
+            if (srcGate == null)
+            {
+                MessageBox.Show("LAMP: Upstream gate not found; lamp will be off.", "Evaluate error",
+                                MessageBoxButtons.OK, MessageBoxIcon.Error);
+                lampOn = false;
+                return lampOn;
+            }
 
-            // FromPin is the upstream output
-            var fromPin = wire.FromPin;
-
-            // Replace 'Owner' with whatever your Pin exposes (Owner/Parent/OwnerGate)
-            var sourceGate = fromPin.Owner as Gate;
-            if (sourceGate == null) return false;
-
-            // Find the index of the upstream output pin
-            int outIndex = sourceGate.Pins.IndexOf(fromPin);
-            if (outIndex < 0) return false;
-
-            return sourceGate.GetOutput(outIndex);
+            lampOn = srcGate.Evaluate();
+            return lampOn;
         }
 
         public override void Draw(Graphics g)
         {
-            // Update lamp state
-            lampOn = SampleInputHigh();
-
             var body = new Rectangle(left, top, WIDTH, HEIGHT);
             g.DrawRectangle(Pens.Black, body);
 
-            // Bulb area
             int pad = 8;
             var bulbRect = new Rectangle(left + pad, top + pad, WIDTH - 2 * pad, HEIGHT - 2 * pad);
 
-            // Smooth circles
             var prev = g.SmoothingMode;
             g.SmoothingMode = SmoothingMode.AntiAlias;
 
             if (lampOn)
             {
-                // Green glow with halos to kinda look like light
                 using (var haloOuter = new SolidBrush(Color.FromArgb(32, 144, 238, 144)))
                 using (var haloMid = new SolidBrush(Color.FromArgb(64, 144, 238, 144)))
                 using (var haloInner = new SolidBrush(Color.FromArgb(96, 144, 238, 144)))
@@ -98,10 +92,8 @@ namespace Circuits
             }
 
             g.DrawEllipse(Pens.Black, bulbRect);
-
             g.SmoothingMode = prev;
 
-            // Draw pins last
             base.Draw(g);
         }
 

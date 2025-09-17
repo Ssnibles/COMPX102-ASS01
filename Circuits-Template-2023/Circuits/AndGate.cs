@@ -1,52 +1,76 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Drawing;
 
 namespace Circuits
 {
-    /// <summary>
-    /// Implements an AND gate with two inputs and one output.
-    /// Uses PNG images from resources for normal and selected states.
-    /// </summary>
     public class AndGate : Gate
     {
-        private static Bitmap normalImage;  // Normal state image
+        private static Bitmap normalImage;   // Normal state image
         private static Bitmap selectedImage; // Selected state image
 
-        /// <summary>
-        /// Constructor creates the specific pins and positions them.
-        /// </summary>
         public AndGate(int x, int y) : base(x, y)
         {
-            // Load images once if not already loaded
-            if (normalImage == null)
+            try
             {
-                normalImage = Properties.Resources.AndGate;     // AndGate.png
-                selectedImage = Properties.Resources.AndGateRed; // AndGateRed.png
+                if (normalImage == null)
+                {
+                    // Ensure these names match your Resources.resx entries
+                    normalImage = Properties.Resources.AndGate;
+                    selectedImage = Properties.Resources.AndGateRed;
+                }
+            }
+            catch
+            {
+                normalImage = null;
+                selectedImage = null;
             }
 
-            // Create two input pins and one output pin
+            pins.Clear();
+            // Two inputs (left top/bottom), one output (right middle)
             pins.Add(new Pin(this, true, 20));
-            pins.Add(new Pin(this, true, 20));
-            pins.Add(new Pin(this, false, 20));
-
+            pins.Add(new Pin(this, true, HEIGHT - 20));
+            pins.Add(new Pin(this, false, HEIGHT / 2));
             MoveTo(x, y);
         }
 
-        /// <summary>
-        /// Draw the AND gate using the appropriate PNG bitmap from resources.
-        /// </summary>
+        public override void MoveTo(int x, int y)
+        {
+            left = x;
+            top = y;
+
+            if (pins.Count >= 3)
+            {
+                pins[0].X = x - GAP;
+                pins[0].Y = y + 10;
+
+                pins[1].X = x - GAP;
+                pins[1].Y = y + HEIGHT - 10;
+
+                pins[2].X = x + WIDTH + GAP;
+                pins[2].Y = y + HEIGHT / 2;
+            }
+        }
+
+        public override bool Evaluate()
+        {
+            bool a = EvalInputOrFalse(0, "AND", "A");
+            bool b = EvalInputOrFalse(1, "AND", "B");
+            return a && b;
+        }
+
+        public override bool GetOutput(int index) => index == 2 && Evaluate();
+
         public override void Draw(Graphics paper)
         {
-            // Draw pins first (this also sets the selected state)
+            // Draw pins first (and any adorners the Pin.Draw might add)
             base.Draw(paper);
 
-            // Choose the appropriate image based on selection state
+            // Pick normal or selected image and draw
             Bitmap imageToUse = selected ? selectedImage : normalImage;
-
             if (imageToUse != null)
             {
-                // Draw the image scaled to the gate size
-                Rectangle rect = new Rectangle(left, top, WIDTH, HEIGHT);
-                paper.DrawImage(imageToUse, rect);
+                Rectangle destRect = new Rectangle(left, top, WIDTH, HEIGHT);
+                paper.DrawImage(imageToUse, destRect);
             }
         }
     }

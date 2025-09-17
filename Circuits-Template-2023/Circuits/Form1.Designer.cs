@@ -34,6 +34,7 @@
             this.toolStripButtonNot = new System.Windows.Forms.ToolStripButton();
             this.toolStripButtonInput = new System.Windows.Forms.ToolStripButton();
             this.toolStripButtonOutputLamp = new System.Windows.Forms.ToolStripButton();
+            this.toolStripLabelEvaluate = new System.Windows.Forms.ToolStripLabel();
             this.toolStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -45,7 +46,8 @@
             this.toolStripButtonOr,
             this.toolStripButtonNot,
             this.toolStripButtonInput,
-            this.toolStripButtonOutputLamp});
+            this.toolStripButtonOutputLamp,
+            this.toolStripLabelEvaluate});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(1008, 25);
@@ -102,6 +104,13 @@
             this.toolStripButtonOutputLamp.Text = "toolStripButton1";
             this.toolStripButtonOutputLamp.Click += new System.EventHandler(this.toolStripButtonOutputLamp_Click);
             // 
+            // toolStripLabelEvaluate
+            // 
+            this.toolStripLabelEvaluate.Name = "toolStripLabelEvaluate";
+            this.toolStripLabelEvaluate.Size = new System.Drawing.Size(51, 22);
+            this.toolStripLabelEvaluate.Text = "Evaluate";
+            this.toolStripLabelEvaluate.Click += new System.EventHandler(this.toolStripLabelEvaluate_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -132,6 +141,7 @@
         private System.Windows.Forms.ToolStripButton toolStripButtonNot;
         private System.Windows.Forms.ToolStripButton toolStripButtonInput;
         private System.Windows.Forms.ToolStripButton toolStripButtonOutputLamp;
+        private System.Windows.Forms.ToolStripLabel toolStripLabelEvaluate;
     }
 }
 
