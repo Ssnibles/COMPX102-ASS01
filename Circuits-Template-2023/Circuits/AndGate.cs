@@ -3,6 +3,10 @@ using System.Drawing;
 
 namespace Circuits
 {
+    /// <summary>
+    /// Two-input AND with image-based body (normal and red variants).
+    /// Pins are positioned left/left/right and drawn first, then the image is drawn on top.
+    /// </summary>
     public class AndGate : Gate
     {
         private static Bitmap normalImage;
@@ -10,6 +14,7 @@ namespace Circuits
 
         public AndGate(int x, int y) : base(x, y)
         {
+            // Cache resource lookups so multiple gates share the same bitmaps.
             try
             {
                 if (normalImage == null)
@@ -18,34 +23,22 @@ namespace Circuits
                     selectedImage = Properties.Resources.AndGateRed;
                 }
             }
-            catch
-            {
-                normalImage = null;
-                selectedImage = null;
-            }
+            catch { normalImage = selectedImage = null; }
 
-            pins.Clear();
+            // Inputs A/B on the left; one output on the right middle.
             pins.Add(new Pin(this, true, 20));
             pins.Add(new Pin(this, true, HEIGHT - 20));
             pins.Add(new Pin(this, false, HEIGHT / 2));
-            MoveTo(x, y);
+            LayoutPins();
         }
 
-        public override void MoveTo(int x, int y)
+        protected override void LayoutPins()
         {
-            left = x;
-            top = y;
-
             if (pins.Count >= 3)
             {
-                pins[0].X = x - GAP;
-                pins[0].Y = y + 10;
-
-                pins[1].X = x - GAP;
-                pins[1].Y = y + HEIGHT - 10;
-
-                pins[2].X = x + WIDTH + GAP;
-                pins[2].Y = y + HEIGHT / 2;
+                pins[0].X = left - GAP; pins[0].Y = top + 10;
+                pins[1].X = left - GAP; pins[1].Y = top + HEIGHT - 10;
+                pins[2].X = left + WIDTH + GAP; pins[2].Y = top + HEIGHT / 2;
             }
         }
 
@@ -58,19 +51,17 @@ namespace Circuits
 
         public override bool GetOutput(int index) => index == 2 && Evaluate();
 
-        public override void Draw(Graphics paper)
+        /// <summary>
+        /// Draw the currently selected or normal image.
+        /// Pins are already drawn by the template before this call.
+        /// </summary>
+        protected override void DrawBody(Graphics g)
         {
-            base.Draw(paper);
-
-            Bitmap imageToUse = selected ? selectedImage : normalImage;
-            if (imageToUse != null)
-            {
-                Rectangle destRect = new Rectangle(left, top, WIDTH, HEIGHT);
-                paper.DrawImage(imageToUse, destRect);
-            }
+            var rect = new Rectangle(left, top, WIDTH, HEIGHT);
+            var img = selected ? selectedImage : normalImage;
+            if (img != null) g.DrawImage(img, rect); // image over pins
         }
 
-        // NEW: clone with same position; pins are fresh via constructor
         public override Gate Clone()
         {
             var copy = new AndGate(left, top);

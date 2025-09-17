@@ -3,6 +3,9 @@ using System.Drawing;
 
 namespace Circuits
 {
+    /// <summary>
+    /// Single-input NOT (inverter) with image-based body (normal and red variants).
+    /// </summary>
     public class NotGate : Gate
     {
         private static Bitmap normalImage;
@@ -18,27 +21,19 @@ namespace Circuits
                     selectedImage = Properties.Resources.NotGateRed;
                 }
             }
-            catch
-            {
-                normalImage = null;
-                selectedImage = null;
-            }
+            catch { normalImage = selectedImage = null; }
 
-            pins.Clear();
             pins.Add(new Pin(this, true, HEIGHT / 2));
             pins.Add(new Pin(this, false, HEIGHT / 2));
-            MoveTo(x, y);
+            LayoutPins();
         }
 
-        public override void MoveTo(int x, int y)
+        protected override void LayoutPins()
         {
-            left = x;
-            top = y;
-
             if (pins.Count >= 2)
             {
-                pins[0].X = x - GAP; pins[0].Y = y + HEIGHT / 2;
-                pins[1].X = x + WIDTH + GAP; pins[1].Y = y + HEIGHT / 2;
+                pins[0].X = left - GAP; pins[0].Y = top + HEIGHT / 2;
+                pins[1].X = left + WIDTH + GAP; pins[1].Y = top + HEIGHT / 2;
             }
         }
 
@@ -50,12 +45,11 @@ namespace Circuits
 
         public override bool GetOutput(int index) => index == 1 && Evaluate();
 
-        public override void Draw(Graphics paper)
+        protected override void DrawBody(Graphics g)
         {
-            base.Draw(paper);
+            var rect = new Rectangle(left, top, WIDTH, HEIGHT);
             var img = selected ? selectedImage : normalImage;
-            if (img != null)
-                paper.DrawImage(img, new Rectangle(left, top, WIDTH, HEIGHT));
+            if (img != null) g.DrawImage(img, rect); // image over pins
         }
 
         public override Gate Clone()

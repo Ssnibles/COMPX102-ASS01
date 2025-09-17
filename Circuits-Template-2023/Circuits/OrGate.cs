@@ -3,6 +3,10 @@ using System.Drawing;
 
 namespace Circuits
 {
+    /// <summary>
+    /// Two-input OR with image-based body (normal and red variants).
+    /// Draw order is pins first, then the image to keep pins beneath.
+    /// </summary>
     public class OrGate : Gate
     {
         private static Bitmap normalImage;
@@ -18,29 +22,21 @@ namespace Circuits
                     selectedImage = Properties.Resources.OrGateRed;
                 }
             }
-            catch
-            {
-                normalImage = null;
-                selectedImage = null;
-            }
+            catch { normalImage = selectedImage = null; }
 
-            pins.Clear();
             pins.Add(new Pin(this, true, 20));
             pins.Add(new Pin(this, true, HEIGHT - 20));
             pins.Add(new Pin(this, false, HEIGHT / 2));
-            MoveTo(x, y);
+            LayoutPins();
         }
 
-        public override void MoveTo(int x, int y)
+        protected override void LayoutPins()
         {
-            left = x;
-            top = y;
-
             if (pins.Count >= 3)
             {
-                pins[0].X = x - GAP; pins[0].Y = y + 10;
-                pins[1].X = x - GAP; pins[1].Y = y + HEIGHT - 10;
-                pins[2].X = x + WIDTH + GAP; pins[2].Y = y + HEIGHT / 2;
+                pins[0].X = left - GAP; pins[0].Y = top + 10;
+                pins[1].X = left - GAP; pins[1].Y = top + HEIGHT - 10;
+                pins[2].X = left + WIDTH + GAP; pins[2].Y = top + HEIGHT / 2;
             }
         }
 
@@ -53,12 +49,11 @@ namespace Circuits
 
         public override bool GetOutput(int index) => index == 2 && Evaluate();
 
-        public override void Draw(Graphics paper)
+        protected override void DrawBody(Graphics g)
         {
-            base.Draw(paper);
+            var rect = new Rectangle(left, top, WIDTH, HEIGHT);
             var img = selected ? selectedImage : normalImage;
-            if (img != null)
-                paper.DrawImage(img, new Rectangle(left, top, WIDTH, HEIGHT));
+            if (img != null) g.DrawImage(img, rect); // image over pins
         }
 
         public override Gate Clone()
