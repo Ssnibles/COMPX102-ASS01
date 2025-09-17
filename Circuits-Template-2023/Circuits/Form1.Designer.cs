@@ -34,10 +34,18 @@
             this.toolStripButtonNot = new System.Windows.Forms.ToolStripButton();
             this.toolStripButtonInput = new System.Windows.Forms.ToolStripButton();
             this.toolStripButtonOutputLamp = new System.Windows.Forms.ToolStripButton();
-            this.toolStripLabelEvaluate = new System.Windows.Forms.ToolStripLabel();
-            this.toolStripLabelClone = new System.Windows.Forms.ToolStripLabel();
-            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
+            this.toolStripLabelEvaluate = new System.Windows.Forms.ToolStripLabel();
+            this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
+            this.toolStripLabelClone = new System.Windows.Forms.ToolStripLabel();
+            this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
+            this.toolStripLabelStartGroup = new System.Windows.Forms.ToolStripLabel();
+            this.toolStripSeparator4 = new System.Windows.Forms.ToolStripSeparator();
+            this.toolStripLabelEndGroup = new System.Windows.Forms.ToolStripLabel();
+            this.toolStripSeparator5 = new System.Windows.Forms.ToolStripSeparator();
+            this.toolStripLabelDelete = new System.Windows.Forms.ToolStripLabel();
+            this.toolStripSeparator6 = new System.Windows.Forms.ToolStripSeparator();
+            this.toolStripLabelClear = new System.Windows.Forms.ToolStripLabel();
             this.toolStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -53,7 +61,15 @@
             this.toolStripSeparator2,
             this.toolStripLabelEvaluate,
             this.toolStripSeparator1,
-            this.toolStripLabelClone});
+            this.toolStripLabelClone,
+            this.toolStripSeparator3,
+            this.toolStripLabelStartGroup,
+            this.toolStripSeparator4,
+            this.toolStripLabelEndGroup,
+            this.toolStripSeparator5,
+            this.toolStripLabelDelete,
+            this.toolStripSeparator6,
+            this.toolStripLabelClear});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(1008, 25);
@@ -110,12 +126,22 @@
             this.toolStripButtonOutputLamp.Text = "toolStripButton1";
             this.toolStripButtonOutputLamp.Click += new System.EventHandler(this.toolStripButtonOutputLamp_Click);
             // 
+            // toolStripSeparator2
+            // 
+            this.toolStripSeparator2.Name = "toolStripSeparator2";
+            this.toolStripSeparator2.Size = new System.Drawing.Size(6, 25);
+            // 
             // toolStripLabelEvaluate
             // 
             this.toolStripLabelEvaluate.Name = "toolStripLabelEvaluate";
             this.toolStripLabelEvaluate.Size = new System.Drawing.Size(51, 22);
             this.toolStripLabelEvaluate.Text = "Evaluate";
             this.toolStripLabelEvaluate.Click += new System.EventHandler(this.toolStripLabelEvaluate_Click);
+            // 
+            // toolStripSeparator1
+            // 
+            this.toolStripSeparator1.Name = "toolStripSeparator1";
+            this.toolStripSeparator1.Size = new System.Drawing.Size(6, 25);
             // 
             // toolStripLabelClone
             // 
@@ -124,15 +150,52 @@
             this.toolStripLabelClone.Text = "Clone";
             this.toolStripLabelClone.Click += new System.EventHandler(this.toolStripLabelClone_Click);
             // 
-            // toolStripSeparator1
+            // toolStripSeparator3
             // 
-            this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(6, 25);
+            this.toolStripSeparator3.Name = "toolStripSeparator3";
+            this.toolStripSeparator3.Size = new System.Drawing.Size(6, 25);
             // 
-            // toolStripSeparator2
+            // toolStripLabelStartGroup
             // 
-            this.toolStripSeparator2.Name = "toolStripSeparator2";
-            this.toolStripSeparator2.Size = new System.Drawing.Size(6, 25);
+            this.toolStripLabelStartGroup.Name = "toolStripLabelStartGroup";
+            this.toolStripLabelStartGroup.Size = new System.Drawing.Size(67, 22);
+            this.toolStripLabelStartGroup.Text = "Start Group";
+            this.toolStripLabelStartGroup.Click += new System.EventHandler(this.toolStripLabelStartGroup_Click);
+            // 
+            // toolStripSeparator4
+            // 
+            this.toolStripSeparator4.Name = "toolStripSeparator4";
+            this.toolStripSeparator4.Size = new System.Drawing.Size(6, 25);
+            // 
+            // toolStripLabelEndGroup
+            // 
+            this.toolStripLabelEndGroup.Name = "toolStripLabelEndGroup";
+            this.toolStripLabelEndGroup.Size = new System.Drawing.Size(63, 22);
+            this.toolStripLabelEndGroup.Text = "End Group";
+            this.toolStripLabelEndGroup.Click += new System.EventHandler(this.toolStripLabelEndGroup_Click);
+            // 
+            // toolStripSeparator5
+            // 
+            this.toolStripSeparator5.Name = "toolStripSeparator5";
+            this.toolStripSeparator5.Size = new System.Drawing.Size(6, 25);
+            // 
+            // toolStripLabelDelete
+            // 
+            this.toolStripLabelDelete.Name = "toolStripLabelDelete";
+            this.toolStripLabelDelete.Size = new System.Drawing.Size(40, 22);
+            this.toolStripLabelDelete.Text = "Delete";
+            this.toolStripLabelDelete.Click += new System.EventHandler(this.toolStripLabelDelete_Click);
+            // 
+            // toolStripSeparator6
+            // 
+            this.toolStripSeparator6.Name = "toolStripSeparator6";
+            this.toolStripSeparator6.Size = new System.Drawing.Size(6, 25);
+            // 
+            // toolStripLabelClear
+            // 
+            this.toolStripLabelClear.Name = "toolStripLabelClear";
+            this.toolStripLabelClear.Size = new System.Drawing.Size(51, 22);
+            this.toolStripLabelClear.Text = "Clear All";
             // 
             // Form1
             // 
@@ -168,6 +231,14 @@
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
         private System.Windows.Forms.ToolStripLabel toolStripLabelClone;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
+        private System.Windows.Forms.ToolStripLabel toolStripLabelStartGroup;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator4;
+        private System.Windows.Forms.ToolStripLabel toolStripLabelEndGroup;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator5;
+        private System.Windows.Forms.ToolStripLabel toolStripLabelDelete;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator6;
+        private System.Windows.Forms.ToolStripLabel toolStripLabelClear;
     }
 }
 

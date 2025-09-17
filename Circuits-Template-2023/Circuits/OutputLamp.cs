@@ -55,7 +55,10 @@ namespace Circuits
         public override void Draw(Graphics g)
         {
             var body = new Rectangle(left, top, WIDTH, HEIGHT);
-            g.DrawRectangle(Pens.Black, body);
+
+            // Selection indicator: red frame when selected
+            var framePen = selected ? Pens.Red : Pens.Black;
+            g.DrawRectangle(framePen, body); // selection-visible outline [web:191][web:196]
 
             int pad = 8;
             var bulbRect = new Rectangle(left + pad, top + pad, WIDTH - 2 * pad, HEIGHT - 2 * pad);
@@ -81,31 +84,27 @@ namespace Circuits
             else
             {
                 using (var off = new SolidBrush(Color.FromArgb(40, 40, 40)))
-                {
                     g.FillEllipse(off, bulbRect);
-                }
             }
 
-            g.DrawEllipse(Pens.Black, bulbRect);
+            // Red ring when selected, else black
+            g.DrawEllipse(framePen, bulbRect); // lamp ring reflects selection [web:191][web:196]
+
             g.SmoothingMode = prev;
 
             base.Draw(g);
         }
 
-        // NEW: clone with same position and current on/off snapshot (no wires)
-        public override Gate Clone()
-        {
-            var copy = new OutputLamp(left, top);
-            // Copy visual state snapshot; no wires are cloned
-            // Access to private field is allowed within the same class
-            copy.lampOn = this.lampOn;
-            copy.Selected = false;
-            return copy;
-        }
-
         private static Rectangle Inflate(Rectangle r, int d)
         {
             return new Rectangle(r.X - d, r.Y - d, r.Width + 2 * d, r.Height + 2 * d);
+        }
+
+        public override Gate Clone()
+        {
+            var copy = new OutputLamp(left, top);
+            copy.Selected = false;
+            return copy;
         }
     }
 }

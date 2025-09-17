@@ -25,8 +25,8 @@ namespace Circuits
             }
 
             pins.Clear();
-            pins.Add(new Pin(this, true, 10));
-            pins.Add(new Pin(this, true, HEIGHT - 10));
+            pins.Add(new Pin(this, true, 20));
+            pins.Add(new Pin(this, true, HEIGHT - 20));
             pins.Add(new Pin(this, false, HEIGHT / 2));
             MoveTo(x, y);
         }
@@ -38,14 +38,9 @@ namespace Circuits
 
             if (pins.Count >= 3)
             {
-                pins[0].X = x - GAP;
-                pins[0].Y = y + 10;
-
-                pins[1].X = x - GAP;
-                pins[1].Y = y + HEIGHT - 10;
-
-                pins[2].X = x + WIDTH + GAP;
-                pins[2].Y = y + HEIGHT / 2;
+                pins[0].X = x - GAP; pins[0].Y = y + 10;
+                pins[1].X = x - GAP; pins[1].Y = y + HEIGHT - 10;
+                pins[2].X = x + WIDTH + GAP; pins[2].Y = y + HEIGHT / 2;
             }
         }
 
@@ -61,16 +56,11 @@ namespace Circuits
         public override void Draw(Graphics paper)
         {
             base.Draw(paper);
-
-            Bitmap imageToUse = selected ? selectedImage : normalImage;
-            if (imageToUse != null)
-            {
-                Rectangle destRect = new Rectangle(left, top, WIDTH, HEIGHT);
-                paper.DrawImage(imageToUse, destRect);
-            }
+            var img = selected ? selectedImage : normalImage;
+            if (img != null)
+                paper.DrawImage(img, new Rectangle(left, top, WIDTH, HEIGHT));
         }
 
-        // NEW: clone with same position; pins are fresh via constructor
         public override Gate Clone()
         {
             var copy = new OrGate(left, top);

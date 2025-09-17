@@ -23,24 +23,25 @@ namespace Circuits
             top = y;
         }
 
-        public bool Selected
+        public virtual bool Selected
         {
-            get { return selected; }
-            set { selected = value; }
+            get => selected;
+            set => selected = value;
         }
 
         public int Left => left;
         public int Top => top;
         public List<Pin> Pins => pins;
 
-        public bool IsMouseOn(int x, int y)
+        // Make hit-testing virtual so composites can override with real bounds
+        public virtual bool IsMouseOn(int x, int y)
         {
             return (left <= x && x < left + WIDTH) && (top <= y && y < top + HEIGHT);
         }
 
         public virtual void Draw(Graphics paper)
         {
-            foreach (Pin pin in pins)
+            foreach (var pin in pins)
             {
                 pin.Draw(paper);
             }
@@ -64,13 +65,13 @@ namespace Circuits
             }
         }
 
-        public abstract bool Evaluate();
+        public abstract bool Evaluate();   // subclasses must implement value calc [web:80]
 
         public virtual bool GetOutput(int index) => false;
 
-        // NEW: force subclasses to provide a cloning implementation
-        public abstract Gate Clone();
+        public abstract Gate Clone();      // per-gate prototype clone, simple and explicit [web:80]
 
+        // Shared helper for evaluation that warns and assumes false if unconnected
         protected bool EvalInputOrFalse(int pinIndex, string gateName, string pinLabel)
         {
             if (pinIndex < 0 || pinIndex >= pins.Count)

@@ -25,8 +25,8 @@ namespace Circuits
             }
 
             pins.Clear();
-            pins.Add(new Pin(this, true, 10));
-            pins.Add(new Pin(this, true, HEIGHT - 10));
+            pins.Add(new Pin(this, true, 20));
+            pins.Add(new Pin(this, true, HEIGHT - 20));
             pins.Add(new Pin(this, false, HEIGHT / 2));
             MoveTo(x, y);
         }
