@@ -45,8 +45,8 @@ namespace Circuits
             if (imageToUse != null)
             {
                 // Draw the image scaled to the gate size
-                Rectangle destRect = new Rectangle(left, top, WIDTH, HEIGHT);
-                paper.DrawImage(imageToUse, destRect);
+                Rectangle rect = new Rectangle(left, top, WIDTH, HEIGHT);
+                paper.DrawImage(imageToUse, rect);
             }
         }
     }

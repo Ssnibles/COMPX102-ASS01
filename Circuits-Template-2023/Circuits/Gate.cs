@@ -92,5 +92,11 @@ namespace Circuits
                 pins[2].Y = y + HEIGHT / 2;
             }
         }
+
+        /// <summary>
+        /// Return the boolean value of an output pin by index.
+        /// Gates without outputs can return false by default and override as needed.
+        /// </summary>
+        public virtual bool GetOutput(int index) => false;
     }
 }

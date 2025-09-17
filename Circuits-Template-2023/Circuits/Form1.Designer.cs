@@ -32,6 +32,8 @@
             this.toolStripButtonAnd = new System.Windows.Forms.ToolStripButton();
             this.toolStripButtonOr = new System.Windows.Forms.ToolStripButton();
             this.toolStripButtonNot = new System.Windows.Forms.ToolStripButton();
+            this.toolStripButtonInput = new System.Windows.Forms.ToolStripButton();
+            this.toolStripButtonOutputLamp = new System.Windows.Forms.ToolStripButton();
             this.toolStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -41,7 +43,9 @@
             this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripButtonAnd,
             this.toolStripButtonOr,
-            this.toolStripButtonNot});
+            this.toolStripButtonNot,
+            this.toolStripButtonInput,
+            this.toolStripButtonOutputLamp});
             this.toolStrip1.Location = new System.Drawing.Point(0, 0);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(1008, 25);
@@ -78,6 +82,26 @@
             this.toolStripButtonNot.Text = "toolStripButton1";
             this.toolStripButtonNot.Click += new System.EventHandler(this.toolStripButtonNot_Click);
             // 
+            // toolStripButtonInput
+            // 
+            this.toolStripButtonInput.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.toolStripButtonInput.Image = global::Circuits.Properties.Resources.InputIcon;
+            this.toolStripButtonInput.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButtonInput.Name = "toolStripButtonInput";
+            this.toolStripButtonInput.Size = new System.Drawing.Size(23, 22);
+            this.toolStripButtonInput.Text = "toolStripButton1";
+            this.toolStripButtonInput.Click += new System.EventHandler(this.toolStripButtonInput_Click);
+            // 
+            // toolStripButtonOutputLamp
+            // 
+            this.toolStripButtonOutputLamp.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.toolStripButtonOutputLamp.Image = global::Circuits.Properties.Resources.OutputIcon;
+            this.toolStripButtonOutputLamp.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButtonOutputLamp.Name = "toolStripButtonOutputLamp";
+            this.toolStripButtonOutputLamp.Size = new System.Drawing.Size(23, 22);
+            this.toolStripButtonOutputLamp.Text = "toolStripButton1";
+            this.toolStripButtonOutputLamp.Click += new System.EventHandler(this.toolStripButtonOutputLamp_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -106,6 +130,8 @@
         private System.Windows.Forms.ToolStripButton toolStripButtonAnd;
         private System.Windows.Forms.ToolStripButton toolStripButtonOr;
         private System.Windows.Forms.ToolStripButton toolStripButtonNot;
+        private System.Windows.Forms.ToolStripButton toolStripButtonInput;
+        private System.Windows.Forms.ToolStripButton toolStripButtonOutputLamp;
     }
 }
 

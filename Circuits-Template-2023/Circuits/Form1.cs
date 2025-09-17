@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
+using System.Drawing.Drawing2D; // optional for global smoothing
 
 namespace Circuits
 {
@@ -9,16 +10,22 @@ namespace Circuits
     {
         // Mouse position recorded on mouse down (used for drag)
         protected int startX, startY;
+
         // Currently dragging wire start pin (null if not dragging wire)
         protected Pin startPin = null;
+
         // Saved coordinates of gate before dragging
         protected int currentX, currentY;
+
         // Collection of all gates in the current circuit
         protected List<Gate> gatesList = new List<Gate>();
+
         // Collection of all wires in the current circuit
         protected List<Wire> wiresList = new List<Wire>();
+
         // Currently selected gate or null
         protected Gate current = null;
+
         // Gate being newly inserted and dragged before placement
         protected Gate newGate = null;
 
@@ -55,7 +62,7 @@ namespace Circuits
         {
             // Client-relative mouse for this control
             mouseX = e.X;
-            mouseY = e.Y; // MouseEventArgs.X/Y are client-coordinates for the control raising MouseMove [6]
+            mouseY = e.Y; // MouseEventArgs.X/Y are client-coordinates for the control raising MouseMove
 
             if (startPin != null)
             {
@@ -92,6 +99,7 @@ namespace Circuits
                 if (endPin != null)
                 {
                     Pin input, output;
+
                     if (startPin.IsOutput)
                     {
                         input = endPin;
@@ -102,6 +110,7 @@ namespace Circuits
                         input = startPin;
                         output = endPin;
                     }
+
                     // Validate connection direction
                     if (input.IsInput && output.IsOutput)
                     {
@@ -121,9 +130,11 @@ namespace Circuits
                         MessageBox.Show("Error: you must connect an output pin to an input pin.");
                     }
                 }
+
                 startPin = null;
                 Invalidate();
             }
+
             // Reset drag tracking variables
             startX = -1;
             startY = -1;
@@ -149,11 +160,24 @@ namespace Circuits
             newGate = new NotGate(0, 0);
         }
 
+        private void toolStripButtonInput_Click(object sender, EventArgs e)
+        {
+            newGate = new InputSource(0, 0);
+        }
+
+        private void toolStripButtonOutputLamp_Click(object sender, EventArgs e)
+        {
+            newGate = new OutputLamp(0, 0);
+        }
+
         /// <summary>
         /// Paint handler draws gates, wires, dragged elements, and snap-hover indicators.
         /// </summary>
         private void Form1_Paint(object sender, PaintEventArgs e)
         {
+            // Optional global smoothing for nicer lamps
+            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+
             // Draw all gates
             foreach (var gate in gatesList)
             {
@@ -186,7 +210,7 @@ namespace Circuits
             if (mx < 0 || my < 0)
             {
                 var p = PointToClient(Cursor.Position);
-                mx = p.X; my = p.Y; // Convert screen → client for this control [7]
+                mx = p.X; my = p.Y; // Convert screen → client for this control
             }
 
             // Hover ring: uses the same SnapRadius as IsMouseOn for each pin
@@ -194,7 +218,7 @@ namespace Circuits
             {
                 foreach (var pin in gate.Pins)
                 {
-                    pin.DrawSnapHover(e.Graphics, mx, my); // DrawEllipse with unified radius [1]
+                    pin.DrawSnapHover(e.Graphics, mx, my);
                 }
             }
         }
@@ -221,6 +245,7 @@ namespace Circuits
 
         /// <summary>
         /// Handles mouse clicks for selecting/deselecting gates and placing new gates.
+        /// InputSource toggles on selection.
         /// </summary>
         private void Form1_MouseClick(object sender, MouseEventArgs e)
         {
@@ -249,7 +274,14 @@ namespace Circuits
                     {
                         gate.Selected = true;
                         current = gate;
-                        Invalidate();
+
+                        // Toggle InputSource on selection
+                        if (gate is InputSource src)
+                        {
+                            src.Toggle();
+                        }
+
+                        Invalidate(); // request redraw with new state
                         break;
                     }
                 }
