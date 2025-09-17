@@ -5,8 +5,8 @@ namespace Circuits
 {
     public class NotGate : Gate
     {
-        private static Bitmap normalImage;   // Normal state image
-        private static Bitmap selectedImage; // Selected state image
+        private static Bitmap normalImage;
+        private static Bitmap selectedImage;
 
         public NotGate(int x, int y) : base(x, y)
         {
@@ -14,7 +14,6 @@ namespace Circuits
             {
                 if (normalImage == null)
                 {
-                    // Ensure these names match your Resources.resx entries
                     normalImage = Properties.Resources.NotGate;
                     selectedImage = Properties.Resources.NotGateRed;
                 }
@@ -26,7 +25,6 @@ namespace Circuits
             }
 
             pins.Clear();
-            // One input (left middle), one output (right middle)
             pins.Add(new Pin(this, true, HEIGHT / 2));
             pins.Add(new Pin(this, false, HEIGHT / 2));
             MoveTo(x, y);
@@ -65,6 +63,14 @@ namespace Circuits
                 Rectangle destRect = new Rectangle(left, top, WIDTH, HEIGHT);
                 paper.DrawImage(imageToUse, destRect);
             }
+        }
+
+        // NEW: clone with same position; pins are fresh via constructor
+        public override Gate Clone()
+        {
+            var copy = new NotGate(left, top);
+            copy.Selected = false;
+            return copy;
         }
     }
 }

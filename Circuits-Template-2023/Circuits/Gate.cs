@@ -5,27 +5,16 @@ using System.Windows.Forms;
 
 namespace Circuits
 {
-    /// <summary>
-    /// Base class representing a generic gate in the circuit.
-    /// Contains common properties like position, pins, drawing, and selection state.
-    /// </summary>
     public abstract class Gate
     {
-        // Position of the gate
         protected int left;
         protected int top;
 
-        // Fixed size of gate body
         protected const int WIDTH = 40;
         protected const int HEIGHT = 40;
-
-        // Distance pins extend outside the gate body
         protected const int GAP = 10;
 
-        // List of pins connected to this gate
         protected List<Pin> pins = new List<Pin>();
-
-        // Indicates whether the gate is currently selected
         protected bool selected = false;
 
         public Gate(int x, int y)
@@ -75,13 +64,13 @@ namespace Circuits
             }
         }
 
-        // Subclasses must compute their logical result and return it.
         public abstract bool Evaluate();
 
-        // Optional legacy: gates without outputs return false by default; override where needed.
         public virtual bool GetOutput(int index) => false;
 
-        // Helper to evaluate an input pin with null-check and message, assuming false if unconnected.
+        // NEW: force subclasses to provide a cloning implementation
+        public abstract Gate Clone();
+
         protected bool EvalInputOrFalse(int pinIndex, string gateName, string pinLabel)
         {
             if (pinIndex < 0 || pinIndex >= pins.Count)
@@ -99,7 +88,6 @@ namespace Circuits
                 return false;
             }
 
-            // FromPin is the upstream output; Owner should be a Gate
             var upstreamPin = inPin.InputWire.FromPin;
             var upstreamGate = upstreamPin.Owner as Gate;
             if (upstreamGate == null)

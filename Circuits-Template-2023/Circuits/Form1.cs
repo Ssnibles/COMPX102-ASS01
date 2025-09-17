@@ -159,6 +159,11 @@ namespace Circuits
             RecomputeAndRepaint();
         }
 
+        private void toolStripLabelClone_Click(object sender, EventArgs e)
+        {
+            if (current != null) newGate = current.Clone();
+        }
+
         private void EvaluateAllLamps()
         {
             foreach (var gate in gatesList)
@@ -222,7 +227,7 @@ namespace Circuits
                 startX = e.X;
                 startY = e.Y;
                 currentX = current.Left;
-                currentY = current.Top;
+                currentY = current.Top; 
             }
         }
 

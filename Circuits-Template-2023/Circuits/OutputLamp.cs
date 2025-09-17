@@ -5,9 +5,6 @@ using System.Windows.Forms;
 
 namespace Circuits
 {
-    /// <summary>
-    /// A lamp with one input pin and no outputs that glows when its input is high.
-    /// </summary>
     public class OutputLamp : Gate
     {
         private bool lampOn = false;
@@ -15,7 +12,6 @@ namespace Circuits
         public OutputLamp(int x, int y) : base(x, y)
         {
             pins.Clear();
-            // One input pin; Pin(owner, isInput, offset)
             pins.Add(new Pin(this, true, 20));
             MoveTo(x, y);
         }
@@ -27,7 +23,6 @@ namespace Circuits
 
             if (pins.Count >= 1)
             {
-                // Input on left middle
                 pins[0].X = x - GAP;
                 pins[0].Y = y + HEIGHT / 2;
             }
@@ -38,7 +33,7 @@ namespace Circuits
             if (pins[0].InputWire == null)
             {
                 MessageBox.Show("LAMP: Input is not connected; lamp will be off.", "Unconnected input",
-                                MessageBoxButtons.OK, MessageBoxIcon.Warning); // assume false
+                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 lampOn = false;
                 return lampOn;
             }
@@ -95,6 +90,17 @@ namespace Circuits
             g.SmoothingMode = prev;
 
             base.Draw(g);
+        }
+
+        // NEW: clone with same position and current on/off snapshot (no wires)
+        public override Gate Clone()
+        {
+            var copy = new OutputLamp(left, top);
+            // Copy visual state snapshot; no wires are cloned
+            // Access to private field is allowed within the same class
+            copy.lampOn = this.lampOn;
+            copy.Selected = false;
+            return copy;
         }
 
         private static Rectangle Inflate(Rectangle r, int d)
