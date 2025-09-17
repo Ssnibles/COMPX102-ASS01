@@ -21,13 +21,6 @@ namespace Circuits
         // Distance pins extend outside the gate body
         protected const int GAP = 10;
 
-        // Brushes for drawing selected and normal states
-        protected Brush selectedBrush = Brushes.Red;
-        protected Brush normalBrush = Brushes.LightGray;
-
-        // The brush currently used to draw the gate body (set during drawing)
-        protected Brush brush;
-
         // List of pins connected to this gate
         protected List<Pin> pins = new List<Pin>();
 
@@ -41,7 +34,6 @@ namespace Circuits
         {
             left = x;
             top = y;
-            brush = normalBrush; // Initialise to avoid null reference during drawing
         }
 
         // Property to get/set selected state
@@ -71,9 +63,6 @@ namespace Circuits
         /// </summary>
         public virtual void Draw(Graphics paper)
         {
-            // Select brush color depending on selection state
-            brush = selected ? selectedBrush : normalBrush;
-
             // Draw all pins connected to this gate
             foreach (Pin pin in pins)
             {
@@ -85,7 +74,7 @@ namespace Circuits
         /// Move the gate and its pins to a new position (x,y).
         /// Updates the position of pins relative to the gate body.
         /// </summary>
-        public void MoveTo(int x, int y)
+        public virtual void MoveTo(int x, int y)
         {
             left = x;
             top = y;

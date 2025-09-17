@@ -9,24 +9,21 @@ namespace Circuits
     {
         // Mouse position recorded on mouse down (used for drag)
         protected int startX, startY;
-
         // Currently dragging wire start pin (null if not dragging wire)
         protected Pin startPin = null;
-
         // Saved coordinates of gate before dragging
         protected int currentX, currentY;
-
         // Collection of all gates in the current circuit
         protected List<Gate> gatesList = new List<Gate>();
-
         // Collection of all wires in the current circuit
         protected List<Wire> wiresList = new List<Wire>();
-
         // Currently selected gate or null
         protected Gate current = null;
-
         // Gate being newly inserted and dragged before placement
         protected Gate newGate = null;
+
+        // Track latest mouse position in client coordinates for hover rendering
+        protected int mouseX = -1, mouseY = -1;
 
         public Form1()
         {
@@ -36,7 +33,7 @@ namespace Circuits
 
         /// <summary>
         /// Finds a pin near the given (x,y), or returns null if none.
-        /// Used when inserting wires or selecting pins.
+        /// Uses each pin’s SnapRadius for hit testing.
         /// </summary>
         public Pin findPin(int x, int y)
         {
@@ -52,36 +49,39 @@ namespace Circuits
         }
 
         /// <summary>
-        /// Handles mouse movement events.
-        /// Updates dragging of wires or gates or new gate insertions accordingly.
+        /// Handles mouse movement events and tracks mouse for hover ring.
         /// </summary>
         private void Form1_MouseMove(object sender, MouseEventArgs e)
         {
+            // Client-relative mouse for this control
+            mouseX = e.X;
+            mouseY = e.Y; // MouseEventArgs.X/Y are client-coordinates for the control raising MouseMove [6]
+
             if (startPin != null)
             {
-                // Dragging a wire from a pin: update endpoint position for rubberband line
                 currentX = e.X;
                 currentY = e.Y;
                 Invalidate();
             }
             else if (startX >= 0 && startY >= 0 && current != null)
             {
-                // Dragging a selected gate: move it accordingly
                 current.MoveTo(currentX + (e.X - startX), currentY + (e.Y - startY));
                 Invalidate();
             }
             else if (newGate != null)
             {
-                // Moving a new gate around before placement
                 currentX = e.X;
                 currentY = e.Y;
+                Invalidate();
+            }
+            else
+            {
                 Invalidate();
             }
         }
 
         /// <summary>
         /// Handles mouse button release.
-        /// Finalises wire creation or ends dragging actions.
         /// </summary>
         private void Form1_MouseUp(object sender, MouseEventArgs e)
         {
@@ -124,7 +124,6 @@ namespace Circuits
                 startPin = null;
                 Invalidate();
             }
-
             // Reset drag tracking variables
             startX = -1;
             startY = -1;
@@ -134,15 +133,24 @@ namespace Circuits
 
         /// <summary>
         /// Event handler for pressing the AND gate button.
-        /// Initiates creation of a new AndGate to be placed.
         /// </summary>
         private void toolStripButtonAnd_Click(object sender, EventArgs e)
         {
             newGate = new AndGate(0, 0);
         }
 
+        private void toolStripButtonOr_Click(object sender, EventArgs e)
+        {
+            newGate = new OrGate(0, 0);
+        }
+
+        private void toolStripButtonNot_Click(object sender, EventArgs e)
+        {
+            newGate = new NotGate(0, 0);
+        }
+
         /// <summary>
-        /// Paint handler draws all gates, wires, and any currently dragged elements.
+        /// Paint handler draws gates, wires, dragged elements, and snap-hover indicators.
         /// </summary>
         private void Form1_Paint(object sender, PaintEventArgs e)
         {
@@ -172,6 +180,23 @@ namespace Circuits
                 newGate.MoveTo(currentX, currentY);
                 newGate.Draw(e.Graphics);
             }
+
+            // Fallback if no MouseMove yet: convert screen mouse to client coords
+            int mx = mouseX, my = mouseY;
+            if (mx < 0 || my < 0)
+            {
+                var p = PointToClient(Cursor.Position);
+                mx = p.X; my = p.Y; // Convert screen → client for this control [7]
+            }
+
+            // Hover ring: uses the same SnapRadius as IsMouseOn for each pin
+            foreach (var gate in gatesList)
+            {
+                foreach (var pin in gate.Pins)
+                {
+                    pin.DrawSnapHover(e.Graphics, mx, my); // DrawEllipse with unified radius [1]
+                }
+            }
         }
 
         /// <summary>
@@ -181,7 +206,7 @@ namespace Circuits
         {
             if (current == null)
             {
-                // Try starting wire drag if clicking on a pin
+                // Try starting wire drag if clicking on a pin (uses pin.SnapRadius)
                 startPin = findPin(e.X, e.Y);
             }
             else if (current.IsMouseOn(e.X, e.Y))
