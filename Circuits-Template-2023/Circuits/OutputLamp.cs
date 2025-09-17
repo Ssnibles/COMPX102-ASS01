@@ -5,35 +5,43 @@ using System.Windows.Forms;
 
 namespace Circuits
 {
+    /// <summary>
+    /// Indicator lamp with one input.
+    /// Shows a soft glow when on, and a dark bulb when off.
+    /// Selection is indicated by a red frame and bulb ring.
+    /// </summary>
     public class OutputLamp : Gate
     {
-        private bool lampOn = false;
+        private bool lampOn;
 
         public OutputLamp(int x, int y) : base(x, y)
         {
-            pins.Clear();
+            // One input pin on the left-hand side.
             pins.Add(new Pin(this, true, 20));
-            MoveTo(x, y);
+            LayoutPins();
         }
 
-        public override void MoveTo(int x, int y)
+        /// <summary>
+        /// Place the single input pin to the left middle.
+        /// </summary>
+        protected override void LayoutPins()
         {
-            left = x;
-            top = y;
-
-            if (pins.Count >= 1)
+            if (pins.Count == 1)
             {
-                pins[0].X = x - GAP;
-                pins[0].Y = y + HEIGHT / 2;
+                pins[0].X = left - GAP;
+                pins[0].Y = top + HEIGHT / 2;
             }
         }
 
+        /// <summary>
+        /// Evaluate upstream and cache a snapshot for drawing.
+        /// </summary>
         public override bool Evaluate()
         {
             if (pins[0].InputWire == null)
             {
                 MessageBox.Show("LAMP: Input is not connected; lamp will be off.", "Unconnected input",
-                                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 lampOn = false;
                 return lampOn;
             }
@@ -43,7 +51,7 @@ namespace Circuits
             if (srcGate == null)
             {
                 MessageBox.Show("LAMP: Upstream gate not found; lamp will be off.", "Evaluate error",
-                                MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
                 lampOn = false;
                 return lampOn;
             }
@@ -52,14 +60,18 @@ namespace Circuits
             return lampOn;
         }
 
-        public override void Draw(Graphics g)
+        /// <summary>
+        /// Draw a framed body and a glowing or dark bulb with anti aliased edges.
+        /// </summary>
+        protected override void DrawBody(Graphics g)
         {
             var body = new Rectangle(left, top, WIDTH, HEIGHT);
-
-            // Selection indicator: red frame when selected
             var framePen = selected ? Pens.Red : Pens.Black;
-            g.DrawRectangle(framePen, body); // selection-visible outline [web:191][web:196]
 
+            // Outer frame.
+            g.DrawRectangle(framePen, body); // selection-aware frame
+
+            // Inner bulb (with gentle glow when on).
             int pad = 8;
             var bulbRect = new Rectangle(left + pad, top + pad, WIDTH - 2 * pad, HEIGHT - 2 * pad);
 
@@ -87,12 +99,10 @@ namespace Circuits
                     g.FillEllipse(off, bulbRect);
             }
 
-            // Red ring when selected, else black
-            g.DrawEllipse(framePen, bulbRect); // lamp ring reflects selection [web:191][web:196]
+            // Bulb ring (red when selected).
+            g.DrawEllipse(framePen, bulbRect);
 
             g.SmoothingMode = prev;
-
-            base.Draw(g);
         }
 
         private static Rectangle Inflate(Rectangle r, int d)

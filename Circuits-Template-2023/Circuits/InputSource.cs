@@ -3,36 +3,47 @@ using System.Drawing;
 
 namespace Circuits
 {
+    /// <summary>
+    /// Toggleable on/off input with one output pin.
+    /// Draws a simple filled body, an optional icon overlay, and a centred “1/0”.
+    /// Selection is indicated by a red border.
+    /// </summary>
     public class InputSource : Gate
     {
-        private bool isHigh = false;
+        private bool isHigh;         // current logical state
 
         public InputSource(int x, int y) : base(x, y)
         {
-            pins.Clear();
+            // One output pin on the right-hand side.
             pins.Add(new Pin(this, false, 20));
-            MoveTo(x, y);
+            LayoutPins();
         }
 
+        /// <summary>
+        /// Flip the internal state (used by click without drag).
+        /// </summary>
         public void Toggle() => isHigh = !isHigh;
 
         public override bool Evaluate() => isHigh;
 
         public override bool GetOutput(int index) => index == 0 && isHigh;
 
-        public override void MoveTo(int x, int y)
+        /// <summary>
+        /// Place the single output pin to the right middle.
+        /// </summary>
+        protected override void LayoutPins()
         {
-            left = x;
-            top = y;
-
-            if (pins.Count >= 1)
+            if (pins.Count == 1)
             {
-                pins[0].X = x + WIDTH + GAP;
-                pins[0].Y = y + HEIGHT / 2;
+                pins[0].X = left + WIDTH + GAP;
+                pins[0].Y = top + HEIGHT / 2;
             }
         }
 
-        public override void Draw(Graphics g)
+        /// <summary>
+        /// Fill the body based on state, overlay icon/text, then draw an outline.
+        /// </summary>
+        protected override void DrawBody(Graphics g)
         {
             var rect = new Rectangle(left, top, WIDTH, HEIGHT);
 
@@ -43,11 +54,8 @@ namespace Circuits
             using (var sf = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
                 g.DrawString(isHigh ? "1" : "0", font, Brushes.Black, rect, sf);
 
-            // Selection indicator: red border when selected, else black
-            var borderPen = selected ? Pens.Red : Pens.Black;
-            g.DrawRectangle(borderPen, rect); // draw state-dependent outline [web:191][web:196]
-
-            base.Draw(g);
+            var pen = selected ? Pens.Red : Pens.Black;
+            g.DrawRectangle(pen, rect); // selection ring
         }
 
         public override Gate Clone()

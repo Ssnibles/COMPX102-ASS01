@@ -196,6 +196,7 @@
             this.toolStripLabelClear.Name = "toolStripLabelClear";
             this.toolStripLabelClear.Size = new System.Drawing.Size(51, 22);
             this.toolStripLabelClear.Text = "Clear All";
+            this.toolStripLabelClear.Click += new System.EventHandler(this.toolStripLabelClear_Click);
             // 
             // Form1
             // 
