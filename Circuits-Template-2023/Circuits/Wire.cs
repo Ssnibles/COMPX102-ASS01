@@ -16,57 +16,69 @@ namespace Circuits
     {
         //Has the wire been selected
         protected bool selected = false;
-
         //The pins the wire is connected to
         protected Pin fromPin, toPin;
 
-        /// <summary>
-        /// Initialises the object to the pins it is connected to.
-        /// </summary>
-        /// <param name="from">The pin the wire starts from</param>
-        /// <param name="to">The pin the wire ends at</param>
         public Wire(Pin from, Pin to)
         {
             fromPin = from;
             toPin = to;
         }
 
-        /// <summary>
-        /// Indicates whether this gate is the current one selected.
-        /// </summary>
         public bool Selected
         {
             get { return selected; }
             set { selected = value; }
         }
 
-        /// <summary>
-        /// The output pin that this wire is connected to.
-        /// </summary>
-        public Pin FromPin
-        {
-            get { return fromPin; }
-        }
+        public Pin FromPin { get { return fromPin; } }
+        public Pin ToPin { get { return toPin; } }
 
         /// <summary>
-        /// The input pin that this wire is connected to.
+        /// Hit-test the wire as a line segment with a tolerance (in pixels).
+        /// Computes distance from point to segment and compares with tolerance.
         /// </summary>
-        public Pin ToPin
+        public bool HitTest(int x, int y, int tolerance = 5)
         {
-            get { return toPin; }
+            // Endpoints
+            float x1 = fromPin.X, y1 = fromPin.Y;
+            float x2 = toPin.X, y2 = toPin.Y;
+            float px = x, py = y;
+
+            // Fast check: bounding box grown by tolerance
+            float minX = Math.Min(x1, x2) - tolerance;
+            float maxX = Math.Max(x1, x2) + tolerance;
+            float minY = Math.Min(y1, y2) - tolerance;
+            float maxY = Math.Max(y1, y2) + tolerance;
+            if (px < minX || px > maxX || py < minY || py > maxY)
+                return false;
+
+            // Compute projection of P onto segment and clamp to [0,1]
+            float dx = x2 - x1;
+            float dy = y2 - y1;
+            float len2 = dx * dx + dy * dy;
+            if (len2 <= float.Epsilon) // degenerate
+            {
+                float d2 = (px - x1) * (px - x1) + (py - y1) * (py - y1);
+                return d2 <= tolerance * tolerance;
+            }
+
+            float t = ((px - x1) * dx + (py - y1) * dy) / len2;
+            if (t < 0f) t = 0f; else if (t > 1f) t = 1f;
+
+            float cx = x1 + t * dx;
+            float cy = y1 + t * dy;
+
+            float ddx = px - cx;
+            float ddy = py - cy;
+            float dist2 = ddx * ddx + ddy * ddy;
+
+            return dist2 <= tolerance * tolerance; // within tolerance ⇒ hit [web:182]
         }
 
-        /// <summary>
-        /// Draws the wire.
-        /// </summary>
-        /// <param name="paper"></param>
         public void Draw(Graphics paper)
         {
-            //This is a short-hand way of doing an if statement.  It is saying if selected == true then 
-            //use Color.Red else use Color.White and then create the wire
             Pen wire = new Pen(selected ? Color.Red : Color.White, 3);
-
-            //Draw the wire
             paper.DrawLine(wire, fromPin.X, fromPin.Y, toPin.X, toPin.Y);
         }
     }
