@@ -4,25 +4,26 @@ using System.Drawing;
 
 namespace Circuits
 {
-    // Groups existing gates by reference so wires keep working.
+    // Groups existing gates by reference so wires keep working (this was really broken without referance)
     public class Compound : Gate
     {
-        private sealed class Child
+        private sealed class Child // Make this sealed for safety
         {
             public Gate Gate;
+            // The x and y position of the gate
             public int Dx;
             public int Dy;
             public Child(Gate g, int dx, int dy) { Gate = g; Dx = dx; Dy = dy; }
         }
 
-        private readonly List<Child> children = new List<Child>();
+        private readonly List<Child> children = new List<Child>(); // The list of child gates
 
-        // Cached bounds of the group for hit-testing and adorners
+        // Bounds of the group for hit testing and decoration
         private Rectangle bounds = Rectangle.Empty;
 
         public Compound(int x, int y) : base(x, y)
         {
-            pins.Clear(); // compound itself has no pins; children expose theirs
+            pins.Clear(); // Compound itself has no pins, children expose theirs
         }
 
         public IReadOnlyList<Gate> Children
@@ -35,7 +36,7 @@ namespace Circuits
             }
         }
 
-        // Add an existing gate (no cloning) and record its offset from the group's origin.
+        // Add an existing gate (no cloning) and record its offset from the group origin
         public void AddExisting(Gate g)
         {
             if (g == null) return;
