@@ -8,52 +8,41 @@ namespace Circuits
 {
     public partial class Form1 : Form
     {
-        // Gates and wires
+        // All gates and wires on the canvas
         private readonly List<Gate> gates = new List<Gate>();
         private readonly List<Wire> wires = new List<Wire>();
 
-        // Current selection
+        // Selected gate
         private Gate selectedGate;
-        private Wire selectedWire;
 
-        // Floating preview gate when placing
-        private Gate previewGate;
+        // A gate that follows the mouse before it is placed
+        private Gate newGate;
 
-        // Active compound being built
+        // A compound group being built
         private Compound buildingGroup;
 
-        // Latest mouse position in client coordinates (for hover)
+        // Latest mouse position used for pin hover rings and grouping outlines
         private int mouseX = -1, mouseY = -1;
 
-        // UI finite-state machine to simplify interactions.
-        private enum UiState { Idle, DragWire, DragGate, Preview }
-        private UiState state = UiState.Idle;
+        // Wiring and dragging stuff
+        private Pin wireStart;
+        private int currentX, currentY;
+        private Gate draggingGate;
+        private Point gateStartPos;
+        private Point mouseDownPos;
 
-        // Drag bookkeeping.
-        private Pin wireStart;           // start pin for rubber-band wire
-        private Point gateStartPos;      // selected gate origin at drag begin
-        private Point mouseDownPos;      // mouse at MouseDown
-        private int currentX, currentY;  // rubber-band endpoint during wire drag
-
-        // Lightweight visual resources.
-        private readonly Pen groupDash = new Pen(Color.Gold, 2f) { DashStyle = DashStyle.Dash };
+        // Light overlay pens/brushes for the group outlines and fill
+        private readonly Pen groupOutline = new Pen(Color.Gold, 2f) { DashStyle = DashStyle.Dash };
         private readonly Brush groupFill = new SolidBrush(Color.FromArgb(40, Color.Gold));
 
         public Form1()
         {
             InitializeComponent();
-            DoubleBuffered = true; // reduce flicker when repainting
+            DoubleBuffered = true; // Reduce flicker during painting and dragging
         }
 
-        // == Utility helpers ===================
-
         /// <summary>
-        /// Schedules a repaint (WinForms will call Paint later).
-        /// </summary>
-        private void RequestRepaint() => Invalidate(); // request a repait
-
-        /// <summary>
-        /// Top most gate under a point
+        /// Find the top most gate at a point for selection
         /// </summary>
         private Gate HitGate(int x, int y)
         {
@@ -63,7 +52,7 @@ namespace Circuits
         }
 
         /// <summary>
-        /// First pin under a point (for wire starts and ends)
+        /// Find the first pin at a point, used to start and end wires
         /// </summary>
         private Pin HitPin(int x, int y)
         {
@@ -74,7 +63,7 @@ namespace Circuits
         }
 
         /// <summary>
-        /// Union bounds of several gates, for compound overlay
+        /// Get a union rectangle around a list of gates (used for group overlay)
         /// </summary>
         private Rectangle BoundsOf(IReadOnlyList<Gate> gSelected)
         {
@@ -90,129 +79,126 @@ namespace Circuits
             return Rectangle.FromLTRB(minX, minY, maxX, maxY);
         }
 
-        // === Keyboard shortcuts ====================
+        /// <summary>
+        /// Delete removes the selected gate and its wires; Esc cancels grouping
+        /// </summary>
+        protected override bool ProcessCmdKey(ref Message messages, Keys key)
+        {
+            if (key == Keys.Delete)
+            {
+                DeleteSelection();
+                return true;
+            }
+            if (key == Keys.Escape)
+            {
+                if (buildingGroup != null)
+                {
+                    foreach (var g in buildingGroup.Children) g.Selected = false;
+                    buildingGroup = null;
+                    Cursor = Cursors.Default;
+                    Invalidate();
+                    return true;
+                }
+            }
+            return base.ProcessCmdKey(ref messages, key);
+        }
 
         /// <summary>
-        /// Delete removes the selected gate (and its attached wires) or the selected wire.
-        /// Escape cancels grouping.
+        /// Delete the selected gate and any wires attached to it, then repaint
         /// </summary>
-        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
-        {
-            if (keyData == Keys.Delete) { DeleteSelection(); return true; } // tidy-up and repaint
-            if (keyData == Keys.Escape) { CancelGrouping(); return true; }  // reset cursor and overlays
-            return base.ProcessCmdKey(ref msg, keyData);
-        }
-
         private void DeleteSelection()
         {
-            if (selectedGate != null)
+            if (selectedGate == null) return;
+            // Remove any wires attached to this gate and clear the input link on the input pin
+            for (int i = wires.Count - 1; i >= 0; i--)
             {
-                // Remove any wires attached to the selected gate (cleanly detaching inputs).
-                for (int i = wires.Count - 1; i >= 0; i--)
+                var w = wires[i];
+                if (ReferenceEquals(w.StartPin.Owner, selectedGate) || ReferenceEquals(w.EndPin.Owner, selectedGate))
                 {
-                    var w = wires[i];
-                    if (ReferenceEquals(w.FromPin.Owner, selectedGate) || ReferenceEquals(w.ToPin.Owner, selectedGate))
-                    {
-                        w.ToPin.InputWire = null;
-                        wires.RemoveAt(i);
-                    }
+                    w.EndPin.InputWire = null;
+                    wires.RemoveAt(i);
                 }
-                gates.Remove(selectedGate);
-                selectedGate = null;
-                RequestRepaint(); // show the cleared canvas
-                return;
             }
-
-            if (selectedWire != null)
-            {
-                selectedWire.ToPin.InputWire = null;
-                wires.Remove(selectedWire);
-                selectedWire = null;
-                RequestRepaint(); // redraw without the removed wire
-            }
+            gates.Remove(selectedGate);
+            selectedGate = null;
+            Invalidate();
         }
 
+        /// <summary>
+        /// Clear the canvas and reset all transient state and cursor, then repaint
+        /// </summary>
         private void ClearAll()
         {
-            // Disconnect all inputs first, then clear lists and state
-            foreach (var w in wires) w.ToPin.InputWire = null;
+            foreach (var w in wires) w.EndPin.InputWire = null;
             wires.Clear();
             gates.Clear();
+
             selectedGate = null;
-            selectedWire = null;
-            previewGate = null;
+            newGate = null;
             buildingGroup = null;
-            state = UiState.Idle;
+
             wireStart = null;
-            Cursor = Cursors.Default; // ensure cursor is restored on a full reset
-            RequestRepaint(); // repaint empty scene
+            draggingGate = null;
+            mouseDownPos = Point.Empty;
+            gateStartPos = Point.Empty;
+            currentX = currentY = -1;
+
+            Cursor = Cursors.Default;
+            Invalidate();
         }
 
-        // === Toolbar / menu handler ====================
+        // Toolbar stuff
+        private void toolStripButtonAnd_Click(object s, EventArgs e) { newGate = new AndGate(0, 0); Invalidate(); }
+        private void toolStripButtonOr_Click(object s, EventArgs e) { newGate = new OrGate(0, 0); Invalidate(); }
+        private void toolStripButtonNot_Click(object s, EventArgs e) { newGate = new NotGate(0, 0); Invalidate(); }
+        private void toolStripButtonInput_Click(object s, EventArgs e) { newGate = new InputSource(0, 0); Invalidate(); }
+        private void toolStripButtonOutputLamp_Click(object s, EventArgs e) { newGate = new OutputLamp(0, 0); Invalidate(); }
 
-        private void toolStripButtonAnd_Click(object s, EventArgs e) => StartPreview(new AndGate(0, 0));   // floating preview
-        private void toolStripButtonOr_Click(object s, EventArgs e) => StartPreview(new OrGate(0, 0));    // floating preview
-        private void toolStripButtonNot_Click(object s, EventArgs e) => StartPreview(new NotGate(0, 0));   // floating preview
-        private void toolStripButtonInput_Click(object s, EventArgs e) => StartPreview(new InputSource(0, 0)); // floating preview
-        private void toolStripButtonOutputLamp_Click(object s, EventArgs e) => StartPreview(new OutputLamp(0, 0));  // floating preview
+        // Recompute all lamps after manual request, then repaint
+        private void toolStripLabelEvaluate_Click(object s, EventArgs e)
+        {
+            foreach (var g in gates)
+                if (g is OutputLamp lamp) lamp.Evaluate();
+            Invalidate();
+        }
 
-        private void toolStripLabelEvaluate_Click(object s, EventArgs e) { EvaluateLamps(); RequestRepaint(); } // recompute + repaint
-
+        // Clone the selected gate into a preview so it follows the cursor until placed
         private void toolStripLabelClone_Click(object s, EventArgs e)
         {
-            if (selectedGate != null) StartPreview(selectedGate.Clone()); // prototype clone into preview
+            if (selectedGate != null) { newGate = selectedGate.Clone(); Invalidate(); }
         }
 
-        private void toolStripLabelDelete_Click(object s, EventArgs e) => DeleteSelection(); // parity with Delete key
-        private void toolStripLabelClear_Click(object s, EventArgs e) => ClearAll();        // clear everything
+        private void toolStripLabelDelete_Click(object s, EventArgs e) => DeleteSelection();
+        private void toolStripLabelClear_Click(object s, EventArgs e) => ClearAll();
 
+        // Start selecting gates for a new compound; show a cross cursor as a hint
         private void toolStripLabelStartGroup_Click(object s, EventArgs e)
         {
-            buildingGroup = new Compound(0, 0); // group by reference so wires keep working
-            Cursor = Cursors.Cross;             // visible feedback for grouping mode
-            RequestRepaint();                   // overlays will draw in Paint
+            buildingGroup = new Compound(0, 0);
+            Cursor = Cursors.Cross;
+            Invalidate();
         }
 
+        /// <summary>
+        /// Replace the child gates with the new group, select it, and repaint
+        /// Always restores the default cursor
+        /// </summary>
         private void toolStripLabelEndGroup_Click(object s, EventArgs e)
         {
             if (buildingGroup != null && buildingGroup.Children.Count > 0)
             {
-                // Replace the individual children with a single compound gate
                 foreach (var child in buildingGroup.Children) { child.Selected = false; gates.Remove(child); }
                 gates.Add(buildingGroup);
                 SelectGate(buildingGroup);
             }
-
-            // Always exit grouping mode and restore the cursor, even if nothing was added.
             buildingGroup = null;
-            Cursor = Cursors.Default; // restore standard pointer
-            RequestRepaint();         // repaint without overlays
+            Cursor = Cursors.Default;
+            Invalidate();
         }
 
-        // === Core actions ====================
-
-        private void StartPreview(Gate g)
-        {
-            previewGate = g;
-            state = UiState.Preview;  // new gate follows the cursor until placed
-            RequestRepaint();         // schedule a redraw
-        }
-
-        private void EvaluateLamps()
-        {
-            foreach (var g in gates)
-                if (g is OutputLamp lamp) lamp.Evaluate(); // loop through upstream gates
-        }
-
-        private void CancelGrouping()
-        {
-            if (buildingGroup == null) return;
-            foreach (var g in buildingGroup.Children) g.Selected = false; // tidy selection
-            buildingGroup = null;
-            Cursor = Cursors.Default;  // back to normal pointer
-            RequestRepaint();          // remove overlays
-        }
-
+        /// <summary>
+        /// Select a gate (clear old selection, set new selection state)
+        /// </summary>
         private void SelectGate(Gate g)
         {
             if (selectedGate != null) selectedGate.Selected = false;
@@ -220,15 +206,11 @@ namespace Circuits
             if (selectedGate != null) selectedGate.Selected = true;
         }
 
-        private void SelectWire(Wire w)
-        {
-            if (selectedWire != null) selectedWire.Selected = false;
-            selectedWire = w;
-            if (selectedWire != null) selectedWire.Selected = true;
-        }
+        // === Mouse events =====================
 
-        // === Mouse events ====================
-
+        /// <summary>
+        /// Start wiring if pressing on a pin add to group if grouping; otherwise start dragging a gate
+        /// </summary>
         private void Form1_MouseDown(object sender, MouseEventArgs e)
         {
             mouseDownPos = new Point(e.X, e.Y);
@@ -238,72 +220,77 @@ namespace Circuits
             if (p != null)
             {
                 wireStart = p;
-                state = UiState.DragWire;    // rubber-band begins
-                RequestRepaint();            // show the line immediately
+                currentX = e.X; currentY = e.Y;
+                Invalidate();
                 return;
             }
 
-            // If grouping, add the gate under the pointer on press
+            // While grouping clicking a gate adds it to the group, compound gates cannot be nested
             var gHit = HitGate(e.X, e.Y);
             if (buildingGroup != null && gHit != null && !(gHit is Compound))
             {
                 buildingGroup.AddExisting(gHit);
-                gHit.Selected = true;        // keep it visibly included
-                RequestRepaint();            // refresh overlays
+                gHit.Selected = true;
+                Invalidate();
                 return;
             }
 
-            // Else begin dragging a gate under the pointer
+            // Otherwise press on a gate to start dragging it
             if (gHit != null)
             {
                 SelectGate(gHit);
-                gateStartPos = new Point(selectedGate.Left, selectedGate.Top);
-                state = UiState.DragGate;    // hold to drag
+                draggingGate = gHit;
+                gateStartPos = new Point(gHit.Left, gHit.Top);
+                return;
+            }
+        }
+
+        /// <summary>
+        /// Update the rubber band while wiring, move a gate while dragging; otherwise update cursor follow preview and hover
+        /// </summary>
+        private void Form1_MouseMove(object sender, MouseEventArgs e)
+        {
+            mouseX = e.X; mouseY = e.Y; //Latest pointer position for hover rings and overlays
+
+            // Rubber band while wiring
+            if (wireStart != null)
+            {
+                currentX = e.X; currentY = e.Y;
+                Invalidate();
                 return;
             }
 
-            // Otherwise stay in current state
-            state = (previewGate != null) ? UiState.Preview : UiState.Idle;
-        }
-
-        private void Form1_MouseMove(object sender, MouseEventArgs e)
-        {
-            mouseX = e.X; mouseY = e.Y;
-
-            switch (state)
+            // Drag the selected gate, keeping the original offset from the grab points
+            if (draggingGate != null)
             {
-                case UiState.DragWire:
-                    currentX = e.X; currentY = e.Y;           // update rubber band end
-                    RequestRepaint();                          // redraw the line
-                    break;
-
-                case UiState.DragGate:
-                    if (selectedGate != null)
-                        selectedGate.MoveTo(gateStartPos.X + (e.X - mouseDownPos.X),
-                                            gateStartPos.Y + (e.Y - mouseDownPos.Y));
-                    RequestRepaint();                          // smooth dragging
-                    break;
-
-                case UiState.Preview:
-                    if (previewGate != null)
-                    {
-                        previewGate.MoveTo(e.X, e.Y);          // float with the cursor
-                        RequestRepaint();                      // keep preview live
-                    }
-                    break;
-
-                default:
-                    RequestRepaint();                          // update hover adorners
-                    break;
+                draggingGate.MoveTo(gateStartPos.X + (e.X - mouseDownPos.X),
+                                    gateStartPos.Y + (e.Y - mouseDownPos.Y));
+                Invalidate();
+                return;
             }
+
+            // Let the preview gate follow the mouse until it is placed
+            if (newGate != null)
+            {
+                newGate.MoveTo(e.X, e.Y);
+                Invalidate();
+                return;
+            }
+
+            // Nothing active, just refresh hover rings and any group overlay
+            Invalidate();
         }
 
+        /// <summary>
+        /// Finish a wire if one is being drawn, stop dragging to toggle an InputSource on a short press
+        /// </summary>
         private void Form1_MouseUp(object sender, MouseEventArgs e)
         {
-            if (state == UiState.DragWire)
+            // Connect output to input if compatible and input is free then update lamps
+            if (wireStart != null)
             {
                 var end = HitPin(e.X, e.Y);
-                if (end != null && wireStart != null)
+                if (end != null)
                 {
                     Pin input, output;
                     if (wireStart.IsOutput) { input = end; output = wireStart; }
@@ -314,9 +301,12 @@ namespace Circuits
                         if (input.InputWire == null)
                         {
                             var w = new Wire(output, input);
-                            input.InputWire = w;   // connect to the input
+                            input.InputWire = w;
                             wires.Add(w);
-                            EvaluateLamps();       // reflect immediately
+
+                            // Recompute all lamps so the change is visible immediately
+                            foreach (var g in gates)
+                                if (g is OutputLamp lamp) lamp.Evaluate();
                         }
                         else MessageBox.Show("That input is already used.");
                     }
@@ -324,104 +314,91 @@ namespace Circuits
                 }
 
                 wireStart = null;
-                state = UiState.Idle;
-                RequestRepaint();                      // final wire drawn
+                Invalidate();
                 return;
             }
 
-            if (state == UiState.DragGate)
+            // Stop dragging a tiny movement counts as a click to toggle an InputSource or it would just not register the click
+            if (draggingGate != null)
             {
-                // A short press without movement toggles an InputSource
                 if (selectedGate is InputSource src &&
                     Math.Abs(e.X - mouseDownPos.X) < 2 &&
                     Math.Abs(e.Y - mouseDownPos.Y) < 2)
                 {
                     src.Toggle();
-                    EvaluateLamps();                  // recompute lamps
+
+                    // Update lamps after a source change.
+                    foreach (var g in gates)
+                        if (g is OutputLamp lamp) lamp.Evaluate();
                 }
-                state = UiState.Idle;
-                RequestRepaint();                     // final position shown
+
+                draggingGate = null;
+                Invalidate();
                 return;
             }
         }
 
+        /// <summary>
+        /// Place the preview gate at the pointer when not wiring or dragging
+        /// </summary>
         private void Form1_MouseClick(object sender, MouseEventArgs e)
         {
-            // Place a previewed gate with a click.
-            if (previewGate != null && state == UiState.Preview)
+            if (newGate != null && wireStart == null && draggingGate == null)
             {
-                previewGate.MoveTo(e.X, e.Y);
-                gates.Add(previewGate);
-                previewGate = null;
-                state = UiState.Idle;
-                RequestRepaint();                     // show newly placed gate
+                newGate.MoveTo(e.X, e.Y);
+                gates.Add(newGate);
+                newGate = null;
+                Invalidate();
                 return;
-            }
-
-            // When idle, allow selecting a wire with a small tolerance
-            if (state == UiState.Idle)
-            {
-                SelectGate(null);
-                const int tol = 6;
-                for (int i = wires.Count - 1; i >= 0; i--)
-                {
-                    if (wires[i].HitTest(e.X, e.Y, tol))
-                    {
-                        SelectWire(wires[i]);
-                        RequestRepaint();             // highlight in red
-                        return;
-                    }
-                }
-                SelectWire(null);
-                RequestRepaint();                     // clear any wire selection
             }
         }
 
-        // === Painting ====================
-
+        /// <summary>
+        /// Draw gates (and their pins) then wires then any rubber band preview grouping overlays and finally pin hover rings
+        /// </summary>
         private void Form1_Paint(object sender, PaintEventArgs e)
         {
-            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias; // smooth lines and rings
 
-            // Gates first: their Draw() now renders pins beneath the body (images on top).
-            foreach (var g in gates) g.Draw(e.Graphics); // DrawImage/DrawRectangle happen here
+            // Draw gates first so wires sit on top of bodies
+            foreach (var g in gates) g.Draw(e.Graphics);
 
-            // Then draw wires so connections are always visible above gate bodies.
+            // Draw all wires next for clear visibility
             foreach (var w in wires) w.Draw(e.Graphics);
 
-            // Rubber-band line when dragging a wire.
-            if (state == UiState.DragWire && wireStart != null)
+            // While wiring show a white rubber band from the start pin to the mouse
+            if (wireStart != null)
                 e.Graphics.DrawLine(Pens.White, wireStart.X, wireStart.Y, currentX, currentY);
 
-            // Floating preview is drawn on top for clarity.
-            if (state == UiState.Preview && previewGate != null)
-                previewGate.Draw(e.Graphics);
+            // Draw the floating preview last so it is clearly visible
+            if (newGate != null)
+                newGate.Draw(e.Graphics);
 
-            // Grouping overlays: dashed outline of the hover target and current group bounds.
+            // Grouping overlays: dashed outline on the hover target and a filled box over the group bounds
             if (buildingGroup != null)
             {
                 var hover = HitGate(mouseX, mouseY);
                 if (hover != null && !(hover is Compound))
-                    e.Graphics.DrawRectangle(groupDash, new Rectangle(hover.Left, hover.Top, 40, 40)); // simple outline
+                    e.Graphics.DrawRectangle(groupOutline, new Rectangle(hover.Left, hover.Top, 40, 40));
 
                 var b = BoundsOf(buildingGroup.Children);
                 if (!b.IsEmpty)
                 {
                     e.Graphics.FillRectangle(groupFill, b);
-                    e.Graphics.DrawRectangle(groupDash, b); // readable bounds box
+                    e.Graphics.DrawRectangle(groupOutline, b);
                 }
             }
 
-            // Hover adorners for pins use the latest client coordinates.
+            // Pin hover decorations draw a blue ring when the pointer is within the snap radius.
             int mx = mouseX, my = mouseY;
             if (mx < 0 || my < 0)
             {
-                var p = PointToClient(Cursor.Position);
-                mx = p.X; my = p.Y; // ensure we work in client coords
+                var p = PointToClient(Cursor.Position); // convert from screen to client coordinates (I didn't even know you could do this)
+                mx = p.X; my = p.Y;
             }
             foreach (var g in gates)
                 foreach (var p in g.Pins)
-                    p.DrawSnapHover(e.Graphics, mx, my);
+                    p.DrawHover(e.Graphics, mx, my);
         }
     }
 }

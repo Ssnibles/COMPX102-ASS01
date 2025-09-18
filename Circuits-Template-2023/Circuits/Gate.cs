@@ -5,116 +5,75 @@ using System.Windows.Forms;
 
 namespace Circuits
 {
-    /// <summary>
-    /// Base class for all gates on the canvas
-    /// Holds a position (left and top) and a fixed body size used by image gates
-    /// Owns a concrete list of Pin objects (inputs and outputs)
-    /// Encapsulates a small drawing template
-    /// draw pins first (so they sit under images) then draw the gate body
-    /// Exposes Evaluate/Clone so logic and copy behaviour live with the gate
-    /// </summary>
+    // Base class for all logic gates
     public abstract class Gate
     {
-        // Body origin (top-left) in client coordinates.
-        protected int left;
-        protected int top;
+        protected int left;   // X position of top-left corner
+        protected int top;    // Y position of top-left corner
 
-        // Standard body dimensions for image-based gates.
-        protected const int WIDTH = 40;
-        protected const int HEIGHT = 40;
+        protected const int WIDTH = 40;   // Gate width
+        protected const int HEIGHT = 40;  // Gate height
+        protected const int GAP = 10;     // Gap for pin placement
 
-        // Horizontal gap used when positioning pins either side of the body.
-        protected const int GAP = 10;
+        protected readonly List<Pin> pins = new List<Pin>();  // Pins attached to the gate
+        protected bool selected;          // Gate selection state
 
-        // Pins that belong to this gate.
-        protected readonly List<Pin> pins = new List<Pin>();
-
-        // Selection affects outlines and interaction behaviour
-        protected bool selected;
-
+        // Set initial gate position
         protected Gate(int x, int y)
         {
             left = x;
             top = y;
         }
 
-        // Flag used by the form to render selection rings
+        // Gets/sets whether the gate is selected
         public virtual bool Selected
         {
             get => selected;
             set => selected = value;
         }
 
-        // Convenience accessors for layout and hit test
+        // Gets X position
         public int Left => left;
+        // Gets Y position
         public int Top => top;
 
-        // External code uses this to draw hovers on pins etc
+        // Gets the list of pins
         public List<Pin> Pins => pins;
 
-        /// <summary>
-        /// Simple hit-test against the body rectangle.
-        /// Compound overrides to use the union of its children
-        /// </summary>
+        // Returns true if (x,y) is inside gate bounds
         public virtual bool IsMouseOn(int x, int y)
         {
-            return (left <= x && x < left + WIDTH) && (top <= y && y < top + HEIGHT);
+            return (x >= left && x < left + WIDTH) && (y >= top && y < top + HEIGHT);
         }
 
-        /// <summary>
-        /// Template: draw pins FIRST (under the body), then draw the body
-        /// This intentionally fixes the odd appearance of pins over images
-        /// </summary>
+        // Draws all pins and gate body
         public virtual void Draw(Graphics g)
         {
-            foreach (var p in pins) p.Draw(g);   // pins go underneath
-
-            DrawBody(g);                         // then render images/shapes over the pins
+            foreach (var pin in pins) pin.Draw(g);
+            DrawBody(g);
         }
 
-        /// <summary>
-        /// Subclasses render the visual body (image or shapes and outlines)
-        /// </summary>
+        // Draws the body of the gate (to be implemented by subclasses)
         protected abstract void DrawBody(Graphics g);
 
-        /// <summary>
-        /// Move the body origin and request the subclass re-layout its pins
-        /// Virtual so Compound can move all children in one go
-        /// </summary>
+        // Moves gate to new position; pins are updated
         public virtual void MoveTo(int x, int y)
         {
             left = x;
             top = y;
-            LayoutPins();
+            MoveTo();
         }
 
-        /// <summary>
-        /// Subclasses place their pins relative to (left, top)
-        /// </summary>
-        protected abstract void LayoutPins();
+        // Repositions pins after movement (to be implemented by subclasses)
+        protected abstract void MoveTo();
 
-        /// <summary>
-        /// Compute the gate's boolean result
-        /// Lamps recurse into upstream gates; input sources return internal state
-        /// </summary>
+        // Computes gate output (to be implemented by subclasses)
         public abstract bool Evaluate();
 
-        /// <summary>
-        /// Optional legacy-style output accessor used by some code paths
-        /// </summary>
-        public virtual bool GetOutput(int index) => false;
-
-        /// <summary>
-        /// Prototype-style cloning used by Copy and Compound cloning
-        /// Returns a new, unselected instance with fresh pins.
-        /// </summary>
+        // Creates a copy of this gate (to be implemented by subclasses)
         public abstract Gate Clone();
 
-        /// <summary>
-        /// Evaluate an input pin (by index) safely.
-        /// - Warn if the input is not wired.
-        /// - Assume false when missing or invalid.
-        /// </summary>
+        // Safely reads input pin value, shows warning if unconnected or invalid
         protected bool EvalInputOrFalse(int pinIndex, string gateName, string pinLabel)
         {
             if (pinIndex < 0 || pinIndex >= pins.Count)
@@ -123,7 +82,6 @@ namespace Circuits
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
             }
-
             var inPin = pins[pinIndex];
             if (inPin.InputWire == null)
             {
@@ -131,8 +89,7 @@ namespace Circuits
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return false;
             }
-
-            var upstreamPin = inPin.InputWire.FromPin;
+            var upstreamPin = inPin.InputWire.StartPin;
             var upstreamGate = upstreamPin.Owner as Gate;
             if (upstreamGate == null)
             {
@@ -140,7 +97,6 @@ namespace Circuits
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
             }
-
             return upstreamGate.Evaluate();
         }
     }

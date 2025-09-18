@@ -3,10 +3,7 @@ using System.Drawing;
 
 namespace Circuits
 {
-    /// <summary>
-    /// Two-input OR with image-based body (normal and red variants).
-    /// Draw order is pins first, then the image to keep pins beneath.
-    /// </summary>
+    // Two‑input OR gate with a small image body; inputs left, output right.
     public class OrGate : Gate
     {
         private static Bitmap normalImage;
@@ -27,10 +24,10 @@ namespace Circuits
             pins.Add(new Pin(this, true, 20));
             pins.Add(new Pin(this, true, HEIGHT - 20));
             pins.Add(new Pin(this, false, HEIGHT / 2));
-            LayoutPins();
+            MoveTo();
         }
 
-        protected override void LayoutPins()
+        protected override void MoveTo()
         {
             if (pins.Count >= 3)
             {
@@ -47,13 +44,11 @@ namespace Circuits
             return a || b;
         }
 
-        public override bool GetOutput(int index) => index == 2 && Evaluate();
-
         protected override void DrawBody(Graphics g)
         {
             var rect = new Rectangle(left, top, WIDTH, HEIGHT);
             var img = selected ? selectedImage : normalImage;
-            if (img != null) g.DrawImage(img, rect); // image over pins
+            if (img != null) g.DrawImage(img, rect);
         }
 
         public override Gate Clone()

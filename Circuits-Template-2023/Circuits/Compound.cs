@@ -4,32 +4,23 @@ using System.Drawing;
 
 namespace Circuits
 {
-    /// <summary>
-    /// A compound group that holds references to existing gates.
-    /// Moving the compound moves all children by stored offsets.
-    /// Selection is “all or none”, propagated to the children.
-    /// Wires keep working because child gates and pins are the same objects.
-    /// </summary>
     public class Compound : Gate
     {
-        private sealed class Child
+        // Stores a gate and its offset from compound origin
+        private class Child
         {
             public Gate Gate;
-            public int Dx;
-            public int Dy;
+            public int Dx;  // horizontal offset
+            public int Dy;  // vertical offset
             public Child(Gate g, int dx, int dy) { Gate = g; Dx = dx; Dy = dy; }
         }
 
-        private readonly List<Child> children = new List<Child>();
-
-        // Cached union of child body rectangles for a predictable hit box.
-        private Rectangle bounds = Rectangle.Empty;
+        private readonly List<Child> children = new List<Child>(); // list of child gates
+        private Rectangle bounds = Rectangle.Empty;               // cached bounds
 
         public Compound(int x, int y) : base(x, y) { }
 
-        /// <summary>
-        /// Children gates (read only copy)
-        /// </summary>
+        // Read-only access to all child gates
         public IReadOnlyList<Gate> Children
         {
             get
@@ -40,26 +31,18 @@ namespace Circuits
             }
         }
 
-        /// <summary>
-        /// Add an existing gate (by reference) and record its offset from the group origin.
-        /// Pins are unioned into this gate's pin list for hover adorners.
-        /// </summary>
+        // Add an existing gate, store its offset from compound origin
         public void AddExisting(Gate g)
         {
             if (g == null) return;
-
-            if (children.Count == 0) { left = g.Left; top = g.Top; }
-
             int dx = g.Left - left;
             int dy = g.Top - top;
-
             children.Add(new Child(g, dx, dy));
-            pins.AddRange(g.Pins); // handy so pin hovers still render whilst grouping
-
+            pins.AddRange(g.Pins); // include child pins for interaction
             RecomputeBounds();
         }
 
-        // Compute the union of child bounds, and update stored offsets after any movement.
+        // Compute the bounding rectangle of all children and update offsets
         private void RecomputeBounds()
         {
             if (children.Count == 0)
@@ -67,7 +50,6 @@ namespace Circuits
                 bounds = new Rectangle(left, top, WIDTH, HEIGHT);
                 return;
             }
-
             int minX = int.MaxValue, minY = int.MaxValue, maxX = int.MinValue, maxY = int.MinValue;
             foreach (var ch in children)
             {
@@ -76,10 +58,8 @@ namespace Circuits
                 maxX = Math.Max(maxX, ch.Gate.Left + WIDTH);
                 maxY = Math.Max(maxY, ch.Gate.Top + HEIGHT);
             }
-
             left = minX; top = minY;
             bounds = Rectangle.FromLTRB(minX, minY, maxX, maxY);
-
             for (int i = 0; i < children.Count; i++)
             {
                 var ch = children[i];
@@ -91,6 +71,7 @@ namespace Circuits
 
         public override bool IsMouseOn(int x, int y) => bounds.Contains(x, y);
 
+        // Selection cascades to all children
         public override bool Selected
         {
             get => selected;
@@ -101,9 +82,7 @@ namespace Circuits
             }
         }
 
-        /// <summary>
-        /// Draw children, then (when selected) a dashed outline of the group bounds.
-        /// </summary>
+        // Draw all children and outline if selected
         public override void Draw(Graphics g)
         {
             foreach (var ch in children) ch.Gate.Draw(g);
@@ -114,12 +93,10 @@ namespace Circuits
             }
         }
 
-        protected override void DrawBody(Graphics g) { } // No need the children draw themselves
-        protected override void LayoutPins() { } // Pins are owened by the children
+        // Compound has no body
+        protected override void DrawBody(Graphics g) { }
 
-        /// <summary>
-        /// Move the whole group and re-layout the cached bounds and offsets.
-        /// </summary>
+        // Move compound and all children, then update bounds
         public override void MoveTo(int x, int y)
         {
             left = x; top = y;
@@ -127,19 +104,19 @@ namespace Circuits
             RecomputeBounds();
         }
 
-        public override bool Evaluate() => false; // compound itself is not a logic gate
+        // Compound has no logic output
+        public override bool Evaluate() => false;
 
-        /// <summary>
-        /// Clone children (without wires) and preserve relative offsets.
-        /// </summary>
+        // Copy compound with all children, preserving relative positions
         public override Gate Clone()
         {
-            var copy = new Compound(left, top);
+            int originLeft = left, originTop = top;
+            var copy = new Compound(originLeft, originTop);
             foreach (var ch in children)
             {
-                var gClone = ch.Gate.Clone();
-                gClone.MoveTo(copy.left + ch.Dx, copy.top + ch.Dy);
-                copy.AddExisting(gClone);
+                Gate clone = ch.Gate.Clone();
+                clone.MoveTo(originLeft + ch.Dx, originTop + ch.Dy);
+                copy.AddExisting(clone);
             }
             copy.Selected = false;
             return copy;

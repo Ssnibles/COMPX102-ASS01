@@ -3,55 +3,52 @@ using System.Drawing;
 
 namespace Circuits
 {
-    /// <summary>
-    /// Single-input NOT (inverter) with image-based body (normal and red variants).
-    /// </summary>
+    // NOT gate (inverter), one input pin, one output pin
     public class NotGate : Gate
     {
-        private static Bitmap normalImage;
-        private static Bitmap selectedImage;
+        // The default (unselected) and selected images
+        private static Bitmap notGateNormal;
+        private static Bitmap notGateRed;
 
+        // Get image resources if not already loaded, do nothing if it fails
         public NotGate(int x, int y) : base(x, y)
         {
-            try
-            {
-                if (normalImage == null)
-                {
-                    normalImage = Properties.Resources.NotGate;
-                    selectedImage = Properties.Resources.NotGateRed;
-                }
-            }
-            catch { normalImage = selectedImage = null; }
+            try { if (notGateNormal == null) { notGateNormal = Properties.Resources.NotGate; notGateRed = Properties.Resources.NotGateRed; } }
+            catch { notGateNormal = notGateRed = null; }
 
-            pins.Add(new Pin(this, true, HEIGHT / 2));
-            pins.Add(new Pin(this, false, HEIGHT / 2));
-            LayoutPins();
+            // Input and output pins, middle height
+            pins.Add(new Pin(this, true, HEIGHT / 2));   // Input left
+            pins.Add(new Pin(this, false, HEIGHT / 2));  // Output right
+
+            // Move the pins to their correct spots based on left/top
+            MoveTo();
         }
 
-        protected override void LayoutPins()
+        protected override void MoveTo()
         {
-            if (pins.Count >= 2)
+            if (pins.Count >= 2) //Place the input and output pins
             {
-                pins[0].X = left - GAP; pins[0].Y = top + HEIGHT / 2;
-                pins[1].X = left + WIDTH + GAP; pins[1].Y = top + HEIGHT / 2;
+                pins[0].X = left - GAP; pins[0].Y = top + HEIGHT / 2;     // Input left
+                pins[1].X = left + WIDTH + GAP; pins[1].Y = top + HEIGHT / 2; // Output right
             }
         }
 
+        // Return the inverse of the input value
         public override bool Evaluate()
         {
             bool a = EvalInputOrFalse(0, "NOT", "In");
             return !a;
         }
 
-        public override bool GetOutput(int index) => index == 1 && Evaluate();
-
+        // Draw the gate body, either default or red if selected
         protected override void DrawBody(Graphics g)
         {
             var rect = new Rectangle(left, top, WIDTH, HEIGHT);
-            var img = selected ? selectedImage : normalImage;
-            if (img != null) g.DrawImage(img, rect); // image over pins
+            var img = selected ? notGateRed : notGateNormal;
+            if (img != null) g.DrawImage(img, rect);
         }
 
+        // Make a fresh copy at same position, but not selected
         public override Gate Clone()
         {
             var copy = new NotGate(left, top);

@@ -5,26 +5,18 @@ using System.Windows.Forms;
 
 namespace Circuits
 {
-    /// <summary>
-    /// Indicator lamp with one input.
-    /// Shows a soft glow when on, and a dark bulb when off.
-    /// Selection is indicated by a red frame and bulb ring.
-    /// </summary>
+    // Lamp with one input; glows when on, dark bulb when off.
     public class OutputLamp : Gate
     {
         private bool lampOn;
 
         public OutputLamp(int x, int y) : base(x, y)
         {
-            // One input pin on the left-hand side.
             pins.Add(new Pin(this, true, 20));
-            LayoutPins();
+            MoveTo();
         }
 
-        /// <summary>
-        /// Place the single input pin to the left middle.
-        /// </summary>
-        protected override void LayoutPins()
+        protected override void MoveTo()
         {
             if (pins.Count == 1)
             {
@@ -33,9 +25,6 @@ namespace Circuits
             }
         }
 
-        /// <summary>
-        /// Evaluate upstream and cache a snapshot for drawing.
-        /// </summary>
         public override bool Evaluate()
         {
             if (pins[0].InputWire == null)
@@ -45,9 +34,8 @@ namespace Circuits
                 lampOn = false;
                 return lampOn;
             }
-
-            var fromPin = pins[0].InputWire.FromPin;
-            var srcGate = fromPin.Owner as Gate;
+            var srcPin = pins[0].InputWire.StartPin;
+            var srcGate = srcPin.Owner as Gate;
             if (srcGate == null)
             {
                 MessageBox.Show("LAMP: Upstream gate not found; lamp will be off.", "Evaluate error",
@@ -55,23 +43,17 @@ namespace Circuits
                 lampOn = false;
                 return lampOn;
             }
-
             lampOn = srcGate.Evaluate();
             return lampOn;
         }
 
-        /// <summary>
-        /// Draw a framed body and a glowing or dark bulb with anti aliased edges.
-        /// </summary>
         protected override void DrawBody(Graphics g)
         {
             var body = new Rectangle(left, top, WIDTH, HEIGHT);
             var framePen = selected ? Pens.Red : Pens.Black;
 
-            // Outer frame.
-            g.DrawRectangle(framePen, body); // selection-aware frame
+            g.DrawRectangle(framePen, body);
 
-            // Inner bulb (with gentle glow when on).
             int pad = 8;
             var bulbRect = new Rectangle(left + pad, top + pad, WIDTH - 2 * pad, HEIGHT - 2 * pad);
 
@@ -85,8 +67,8 @@ namespace Circuits
                 using (var haloInner = new SolidBrush(Color.FromArgb(96, 144, 238, 144)))
                 using (var bulbFill = new SolidBrush(Color.FromArgb(200, 144, 238, 144)))
                 {
-                    var r1 = Inflate(bulbRect, 6);
-                    var r2 = Inflate(bulbRect, 3);
+                    var r1 = new Rectangle(bulbRect.X - 6, bulbRect.Y - 6, bulbRect.Width + 12, bulbRect.Height + 12);
+                    var r2 = new Rectangle(bulbRect.X - 3, bulbRect.Y - 3, bulbRect.Width + 6, bulbRect.Height + 6);
                     g.FillEllipse(haloOuter, r1);
                     g.FillEllipse(haloMid, r2);
                     g.FillEllipse(haloInner, bulbRect);
@@ -99,15 +81,8 @@ namespace Circuits
                     g.FillEllipse(off, bulbRect);
             }
 
-            // Bulb ring (red when selected).
             g.DrawEllipse(framePen, bulbRect);
-
             g.SmoothingMode = prev;
-        }
-
-        private static Rectangle Inflate(Rectangle r, int d)
-        {
-            return new Rectangle(r.X - d, r.Y - d, r.Width + 2 * d, r.Height + 2 * d);
         }
 
         public override Gate Clone()
