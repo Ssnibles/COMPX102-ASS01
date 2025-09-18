@@ -94,8 +94,8 @@ namespace Circuits
         }
 
         /// <summary>
-        /// If the mouse is within SnapRadius, draws a solid circle (SnapRadius) around the tip.
-        /// Returns true if hovering within the snap area.
+        /// If the mouse is within SnapRadius, draws a solid circle (SnapRadius) around the tip
+        /// Returns true if hovering within the snap area
         /// </summary>
         public bool DrawSnapHover(Graphics g, int mouseX, int mouseY)
         {

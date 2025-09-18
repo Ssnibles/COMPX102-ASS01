@@ -28,7 +28,7 @@ namespace Circuits
         public Compound(int x, int y) : base(x, y) { }
 
         /// <summary>
-        /// Children gates (read-only copy).
+        /// Children gates (read only copy)
         /// </summary>
         public IReadOnlyList<Gate> Children
         {
