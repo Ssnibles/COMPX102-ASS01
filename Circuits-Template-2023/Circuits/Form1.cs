@@ -6,26 +6,20 @@ using System.Windows.Forms;
 
 namespace Circuits
 {
-    /// <summary>
-    /// Main canvas/controller for the simple logic editor.
-    /// Refactored event flow uses a small state machine:
-    /// Idle, DragWire (rubber band), DragGate (hold-to-drag), Preview (floating new gate).
-    /// Drawing follows normal WinForms patterns: update model, call Invalidate(), and paint in OnPaint.
-    /// </summary>
     public partial class Form1 : Form
     {
-        // Model collections: top-level gates and wires.
+        // Gates and wires
         private readonly List<Gate> gates = new List<Gate>();
         private readonly List<Wire> wires = new List<Wire>();
 
-        // Current selection.
+        // Current selection
         private Gate selectedGate;
         private Wire selectedWire;
 
-        // Floating preview gate (when inserting or cloning).
+        // Floating preview gate when placing
         private Gate previewGate;
 
-        // Active compound being built (grouping mode).
+        // Active compound being built
         private Compound buildingGroup;
 
         // Latest mouse position in client coordinates (for hover)
