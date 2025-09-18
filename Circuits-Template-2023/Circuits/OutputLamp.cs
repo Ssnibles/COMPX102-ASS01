@@ -5,14 +5,13 @@ using System.Windows.Forms;
 
 namespace Circuits
 {
-    // Lamp with one input; glows when on, dark bulb when off.
     public class OutputLamp : Gate
     {
-        private bool lampOn;
+        private bool lampOn; // true if lamp is lit
 
         public OutputLamp(int x, int y) : base(x, y)
         {
-            pins.Add(new Pin(this, true, 20));
+            pins.Add(new Pin(this, true, 20)); // add input pin
             MoveTo();
         }
 
@@ -20,8 +19,8 @@ namespace Circuits
         {
             if (pins.Count == 1)
             {
-                pins[0].X = left - GAP;
-                pins[0].Y = top + HEIGHT / 2;
+                pins[0].X = left - GAP;           // pin on left side
+                pins[0].Y = top + HEIGHT / 2;     // pin at vertical center
             }
         }
 
@@ -29,17 +28,15 @@ namespace Circuits
         {
             if (pins[0].InputWire == null)
             {
-                MessageBox.Show("LAMP: Input is not connected; lamp will be off.", "Unconnected input",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Lamp input not connected; staying off.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 lampOn = false;
                 return lampOn;
             }
             var srcPin = pins[0].InputWire.StartPin;
-            var srcGate = srcPin.Owner as Gate;
+            var srcGate = srcPin?.Owner as Gate;
             if (srcGate == null)
             {
-                MessageBox.Show("LAMP: Upstream gate not found; lamp will be off.", "Evaluate error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Upstream gate missing; lamp off.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 lampOn = false;
                 return lampOn;
             }
@@ -50,39 +47,38 @@ namespace Circuits
         protected override void DrawBody(Graphics g)
         {
             var body = new Rectangle(left, top, WIDTH, HEIGHT);
-            var framePen = selected ? Pens.Red : Pens.Black;
-
-            g.DrawRectangle(framePen, body);
+            var pen = selected ? Pens.Red : Pens.Black; // frame colour depends on selection
+            g.DrawRectangle(pen, body);
 
             int pad = 8;
-            var bulbRect = new Rectangle(left + pad, top + pad, WIDTH - 2 * pad, HEIGHT - 2 * pad);
+            var bulb = new Rectangle(body.X + pad, body.Y + pad, body.Width - 2 * pad, body.Height - 2 * pad); // bulb area
 
             var prev = g.SmoothingMode;
-            g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.SmoothingMode = SmoothingMode.AntiAlias; // smooth circles
 
             if (lampOn)
             {
+                // glowing effect with layered circles
                 using (var haloOuter = new SolidBrush(Color.FromArgb(32, 144, 238, 144)))
                 using (var haloMid = new SolidBrush(Color.FromArgb(64, 144, 238, 144)))
                 using (var haloInner = new SolidBrush(Color.FromArgb(96, 144, 238, 144)))
                 using (var bulbFill = new SolidBrush(Color.FromArgb(200, 144, 238, 144)))
                 {
-                    var r1 = new Rectangle(bulbRect.X - 6, bulbRect.Y - 6, bulbRect.Width + 12, bulbRect.Height + 12);
-                    var r2 = new Rectangle(bulbRect.X - 3, bulbRect.Y - 3, bulbRect.Width + 6, bulbRect.Height + 6);
-                    g.FillEllipse(haloOuter, r1);
-                    g.FillEllipse(haloMid, r2);
-                    g.FillEllipse(haloInner, bulbRect);
-                    g.FillEllipse(bulbFill, new Rectangle(bulbRect.X + 4, bulbRect.Y + 4, bulbRect.Width - 8, bulbRect.Height - 8));
+                    g.FillEllipse(haloOuter, new Rectangle(bulb.X - 6, bulb.Y - 6, bulb.Width + 12, bulb.Height + 12));
+                    g.FillEllipse(haloMid, new Rectangle(bulb.X - 3, bulb.Y - 3, bulb.Width + 6, bulb.Height + 6));
+                    g.FillEllipse(haloInner, bulb);
+                    g.FillEllipse(bulbFill, new Rectangle(bulb.X + 4, bulb.Y + 4, bulb.Width - 8, bulb.Height - 8));
                 }
             }
             else
             {
-                using (var off = new SolidBrush(Color.FromArgb(40, 40, 40)))
-                    g.FillEllipse(off, bulbRect);
+                // bulb is off, just dark grey
+                using (var offBrush = new SolidBrush(Color.FromArgb(40, 40, 40)))
+                    g.FillEllipse(offBrush, bulb);
             }
 
-            g.DrawEllipse(framePen, bulbRect);
-            g.SmoothingMode = prev;
+            g.DrawEllipse(pen, bulb); // bulb outline
+            g.SmoothingMode = prev; // restore smoothing mode
         }
 
         public override Gate Clone()
