@@ -6,12 +6,12 @@ using System.Windows.Forms;
 namespace Circuits
 {
     /// <summary>
-    /// Base class for all gates on the canvas.
-    /// Holds a position (left/top) and a fixed body size used by image gates.
-    /// Owns a concrete list of Pin objects (inputs and outputs).
-    /// Encapsulates a small drawing template:
-    /// draw pins FIRST (so they sit under images), then draw the gate body.
-    /// Exposes Evaluate/Clone so logic and copy behaviour live with the gate.
+    /// Base class for all gates on the canvas
+    /// Holds a position (left and top) and a fixed body size used by image gates
+    /// Owns a concrete list of Pin objects (inputs and outputs)
+    /// Encapsulates a small drawing template
+    /// draw pins first (so they sit under images) then draw the gate body
+    /// Exposes Evaluate/Clone so logic and copy behaviour live with the gate
     /// </summary>
     public abstract class Gate
     {
@@ -29,7 +29,7 @@ namespace Circuits
         // Pins that belong to this gate.
         protected readonly List<Pin> pins = new List<Pin>();
 
-        // Selection affects outlines and interaction behaviour.
+        // Selection affects outlines and interaction behaviour
         protected bool selected;
 
         protected Gate(int x, int y)
@@ -38,23 +38,23 @@ namespace Circuits
             top = y;
         }
 
-        // Flag used by the form to render selection rings.
+        // Flag used by the form to render selection rings
         public virtual bool Selected
         {
             get => selected;
             set => selected = value;
         }
 
-        // Convenience accessors for layout and hit tests.
+        // Convenience accessors for layout and hit test
         public int Left => left;
         public int Top => top;
 
-        // External code uses this to draw hovers on pins etc.
+        // External code uses this to draw hovers on pins etc
         public List<Pin> Pins => pins;
 
         /// <summary>
         /// Simple hit-test against the body rectangle.
-        /// Compound overrides to use the union of its children.
+        /// Compound overrides to use the union of its children
         /// </summary>
         public virtual bool IsMouseOn(int x, int y)
         {
@@ -62,8 +62,8 @@ namespace Circuits
         }
 
         /// <summary>
-        /// Template: draw pins FIRST (under the body), then draw the body.
-        /// This intentionally fixes the odd appearance of pins over images.
+        /// Template: draw pins FIRST (under the body), then draw the body
+        /// This intentionally fixes the odd appearance of pins over images
         /// </summary>
         public virtual void Draw(Graphics g)
         {
@@ -73,13 +73,13 @@ namespace Circuits
         }
 
         /// <summary>
-        /// Subclasses render the visual body (image or shapes and outlines).
+        /// Subclasses render the visual body (image or shapes and outlines)
         /// </summary>
         protected abstract void DrawBody(Graphics g);
 
         /// <summary>
-        /// Move the body origin and request the subclass re-layout its pins.
-        /// Virtual so Compound can move all children in one go.
+        /// Move the body origin and request the subclass re-layout its pins
+        /// Virtual so Compound can move all children in one go
         /// </summary>
         public virtual void MoveTo(int x, int y)
         {
@@ -89,23 +89,23 @@ namespace Circuits
         }
 
         /// <summary>
-        /// Subclasses place their pins relative to (left, top).
+        /// Subclasses place their pins relative to (left, top)
         /// </summary>
         protected abstract void LayoutPins();
 
         /// <summary>
-        /// Compute the gate's boolean result.
-        /// Lamps recurse into upstream gates; input sources return internal state.
+        /// Compute the gate's boolean result
+        /// Lamps recurse into upstream gates; input sources return internal state
         /// </summary>
         public abstract bool Evaluate();
 
         /// <summary>
-        /// Optional legacy-style output accessor used by some code paths.
+        /// Optional legacy-style output accessor used by some code paths
         /// </summary>
         public virtual bool GetOutput(int index) => false;
 
         /// <summary>
-        /// Prototype-style cloning used by Copy and Compound cloning.
+        /// Prototype-style cloning used by Copy and Compound cloning
         /// Returns a new, unselected instance with fresh pins.
         /// </summary>
         public abstract Gate Clone();

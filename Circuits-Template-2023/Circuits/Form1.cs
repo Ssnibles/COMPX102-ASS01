@@ -28,7 +28,7 @@ namespace Circuits
         // Active compound being built (grouping mode).
         private Compound buildingGroup;
 
-        // Latest mouse position in client coordinates (for hover).
+        // Latest mouse position in client coordinates (for hover)
         private int mouseX = -1, mouseY = -1;
 
         // UI finite-state machine to simplify interactions.
@@ -51,15 +51,15 @@ namespace Circuits
             DoubleBuffered = true; // reduce flicker when repainting
         }
 
-        // --- Utility helpers --------------------------------------------------
+        // == Utility helpers ===================
 
         /// <summary>
         /// Schedules a repaint (WinForms will call Paint later).
         /// </summary>
-        private void RequestRepaint() => Invalidate(); // request, not force, a redraw
+        private void RequestRepaint() => Invalidate(); // request a repait
 
         /// <summary>
-        /// Topmost gate under a point (scan from end for natural z-order).
+        /// Top most gate under a point
         /// </summary>
         private Gate HitGate(int x, int y)
         {
@@ -69,7 +69,7 @@ namespace Circuits
         }
 
         /// <summary>
-        /// First pin under a point (for wire starts/ends).
+        /// First pin under a point (for wire starts and ends)
         /// </summary>
         private Pin HitPin(int x, int y)
         {
@@ -80,13 +80,13 @@ namespace Circuits
         }
 
         /// <summary>
-        /// Union bounds of several gates, for compound overlay.
+        /// Union bounds of several gates, for compound overlay
         /// </summary>
-        private Rectangle BoundsOf(IReadOnlyList<Gate> gs)
+        private Rectangle BoundsOf(IReadOnlyList<Gate> gSelected)
         {
-            if (gs == null || gs.Count == 0) return Rectangle.Empty;
+            if (gSelected == null || gSelected.Count == 0) return Rectangle.Empty;
             int minX = int.MaxValue, minY = int.MaxValue, maxX = int.MinValue, maxY = int.MinValue;
-            foreach (var g in gs)
+            foreach (var g in gSelected)
             {
                 minX = Math.Min(minX, g.Left);
                 minY = Math.Min(minY, g.Top);
@@ -96,7 +96,7 @@ namespace Circuits
             return Rectangle.FromLTRB(minX, minY, maxX, maxY);
         }
 
-        // --- Keyboard shortcuts ----------------------------------------------
+        // === Keyboard shortcuts ====================
 
         /// <summary>
         /// Delete removes the selected gate (and its attached wires) or the selected wire.
@@ -140,7 +140,7 @@ namespace Circuits
 
         private void ClearAll()
         {
-            // Disconnect all inputs first, then clear lists and state.
+            // Disconnect all inputs first, then clear lists and state
             foreach (var w in wires) w.ToPin.InputWire = null;
             wires.Clear();
             gates.Clear();
@@ -154,7 +154,7 @@ namespace Circuits
             RequestRepaint(); // repaint empty scene
         }
 
-        // --- Toolbar/menu handlers (wire these in the designer) ---------------
+        // === Toolbar / menu handler ====================
 
         private void toolStripButtonAnd_Click(object s, EventArgs e) => StartPreview(new AndGate(0, 0));   // floating preview
         private void toolStripButtonOr_Click(object s, EventArgs e) => StartPreview(new OrGate(0, 0));    // floating preview
@@ -183,7 +183,7 @@ namespace Circuits
         {
             if (buildingGroup != null && buildingGroup.Children.Count > 0)
             {
-                // Replace the individual children with a single compound.
+                // Replace the individual children with a single compound gate
                 foreach (var child in buildingGroup.Children) { child.Selected = false; gates.Remove(child); }
                 gates.Add(buildingGroup);
                 SelectGate(buildingGroup);
@@ -195,7 +195,7 @@ namespace Circuits
             RequestRepaint();         // repaint without overlays
         }
 
-        // --- Core actions -----------------------------------------------------
+        // === Core actions ====================
 
         private void StartPreview(Gate g)
         {
@@ -207,7 +207,7 @@ namespace Circuits
         private void EvaluateLamps()
         {
             foreach (var g in gates)
-                if (g is OutputLamp lamp) lamp.Evaluate(); // cascades through upstream gates
+                if (g is OutputLamp lamp) lamp.Evaluate(); // loop through upstream gates
         }
 
         private void CancelGrouping()
@@ -233,13 +233,13 @@ namespace Circuits
             if (selectedWire != null) selectedWire.Selected = true;
         }
 
-        // --- Mouse events -----------------------------------------------------
+        // === Mouse events ====================
 
         private void Form1_MouseDown(object sender, MouseEventArgs e)
         {
             mouseDownPos = new Point(e.X, e.Y);
 
-            // Start a wire if pressing on a pin.
+            // Start a wire if pressing on a pin
             var p = HitPin(e.X, e.Y);
             if (p != null)
             {
@@ -249,7 +249,7 @@ namespace Circuits
                 return;
             }
 
-            // If grouping, add the gate under the pointer on press.
+            // If grouping, add the gate under the pointer on press
             var gHit = HitGate(e.X, e.Y);
             if (buildingGroup != null && gHit != null && !(gHit is Compound))
             {
@@ -259,16 +259,16 @@ namespace Circuits
                 return;
             }
 
-            // Else begin dragging a gate under the pointer.
+            // Else begin dragging a gate under the pointer
             if (gHit != null)
             {
                 SelectGate(gHit);
                 gateStartPos = new Point(selectedGate.Left, selectedGate.Top);
-                state = UiState.DragGate;    // hold-to-drag
+                state = UiState.DragGate;    // hold to drag
                 return;
             }
 
-            // Otherwise stay in current state (Preview if placing).
+            // Otherwise stay in current state
             state = (previewGate != null) ? UiState.Preview : UiState.Idle;
         }
 
@@ -279,7 +279,7 @@ namespace Circuits
             switch (state)
             {
                 case UiState.DragWire:
-                    currentX = e.X; currentY = e.Y;           // update rubber-band end
+                    currentX = e.X; currentY = e.Y;           // update rubber band end
                     RequestRepaint();                          // redraw the line
                     break;
 
@@ -337,7 +337,7 @@ namespace Circuits
 
             if (state == UiState.DragGate)
             {
-                // A short press without movement toggles an InputSource.
+                // A short press without movement toggles an InputSource
                 if (selectedGate is InputSource src &&
                     Math.Abs(e.X - mouseDownPos.X) < 2 &&
                     Math.Abs(e.Y - mouseDownPos.Y) < 2)
@@ -364,7 +364,7 @@ namespace Circuits
                 return;
             }
 
-            // When idle, allow selecting a wire with a small tolerance.
+            // When idle, allow selecting a wire with a small tolerance
             if (state == UiState.Idle)
             {
                 SelectGate(null);
@@ -383,7 +383,7 @@ namespace Circuits
             }
         }
 
-        // --- Painting ---------------------------------------------------------
+        // === Painting ====================
 
         private void Form1_Paint(object sender, PaintEventArgs e)
         {
